@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.project.QLDSV_HTC.controller.NhapDiemController"
+            prefWidth="1000" prefHeight="700">
+
+    <Label text="Nhập điểm" layoutX="450" layoutY="20" style="-fx-font-size: 20px;"/>
+
+    <Label text="Niên khóa:" layoutX="50" layoutY="80"/>
+    <ComboBox fx:id="cboNienKhoa" layoutX="130" layoutY="75" prefWidth="150"/>
+
+    <Label text="Học kỳ:" layoutX="320" layoutY="80"/>
+    <ComboBox fx:id="cboHocKy" layoutX="380" layoutY="75" prefWidth="80"/>
+
+    <Label text="Môn học:" layoutX="500" layoutY="80"/>
+    <ComboBox fx:id="cboMonHoc" layoutX="570" layoutY="75" prefWidth="180"/>
+
+    <Label text="Nhóm:" layoutX="780" layoutY="80"/>
+    <ComboBox fx:id="cboNhom" layoutX="820" layoutY="75" prefWidth="80"/>
+
+    <Label text="Giảng viên:" layoutX="50" layoutY="130"/>
+    <ComboBox fx:id="cboGiangVien" layoutX="130" layoutY="125" prefWidth="200"/>
+
+    <Button fx:id="btnLoc" text="Lọc" layoutX="380" layoutY="125"/>
+
+    <TableView fx:id="tableDiem" layoutX="50" layoutY="200" prefWidth="900" prefHeight="350" editable="true">
+        <columns>
+            <TableColumn fx:id="colMaSV" text="Mã SV" prefWidth="120"/>
+            <TableColumn fx:id="colHoTenSV" text="Họ tên SV" prefWidth="200"/>
+            <TableColumn fx:id="colDiemCC" text="Điểm CC" prefWidth="100"/>
+            <TableColumn fx:id="colDiemGK" text="Điểm GK" prefWidth="100"/>
+            <TableColumn fx:id="colDiemCK" text="Điểm CK" prefWidth="100"/>
+            <TableColumn fx:id="colDiemHM" text="Điểm hết môn" prefWidth="150"/>
+        </columns>
+    </TableView>
+
+    <HBox spacing="10" layoutX="400" layoutY="580">
+        <Button fx:id="btnGhi" text="Ghi điểm"/>
+        <Button fx:id="btnPhucHoi" text="Phục hồi"/>
+        <Button fx:id="btnClose" text="Thoát"/>
+    </HBox>
+</AnchorPane>

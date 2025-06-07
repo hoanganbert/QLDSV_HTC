@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.project.QLDSV_HTC.controller.LopController"
+            prefWidth="900" prefHeight="650">
+
+    <Label text="Quản lý Lớp" layoutX="380" layoutY="20" style="-fx-font-size: 20px;"/>
+
+    <!-- Form nhập Lớp -->
+    <Label text="Mã Lớp:" layoutX="80" layoutY="80"/>
+    <TextField fx:id="txtMaLop" layoutX="160" layoutY="75" prefWidth="180"/>
+
+    <Label text="Tên Lớp:" layoutX="360" layoutY="80"/>
+    <TextField fx:id="txtTenLop" layoutX="440" layoutY="75" prefWidth="180"/>
+
+    <Label text="Khóa Học:" layoutX="80" layoutY="130"/>
+    <TextField fx:id="txtKhoaHoc" layoutX="160" layoutY="125" prefWidth="180"/>
+
+    <Label text="Khoa:" layoutX="360" layoutY="130"/>
+    <ComboBox fx:id="cboKhoa" layoutX="440" layoutY="125" prefWidth="180"/>
+
+    <HBox spacing="10" layoutX="80" layoutY="180">
+        <Button fx:id="btnAdd" text="Thêm"/>
+        <Button fx:id="btnUpdate" text="Ghi"/>
+        <Button fx:id="btnDelete" text="Xóa"/>
+        <Button fx:id="btnRefresh" text="Phục hồi"/>
+        <Button fx:id="btnClose" text="Thoát"/>
+    </HBox>
+
+    <!-- Table hiển thị Lớp -->
+    <TableView fx:id="tableLop" layoutX="80" layoutY="240" prefWidth="740" prefHeight="360">
+        <columns>
+            <TableColumn fx:id="colMaLop" text="Mã Lớp" prefWidth="150"/>
+            <TableColumn fx:id="colTenLop" text="Tên Lớp" prefWidth="250"/>
+            <TableColumn fx:id="colKhoaHoc" text="Khóa Học" prefWidth="150"/>
+            <TableColumn fx:id="colMaKhoa" text="Mã Khoa" prefWidth="190"/>
+        </columns>
+    </TableView>
+</AnchorPane>

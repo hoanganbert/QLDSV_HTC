@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.project.QLDSV_HTC.controller.LoginController"
+            prefWidth="800" prefHeight="600">
+
+    <!-- Tiêu đề -->
+    <Label text="Đăng nhập hệ thống" layoutX="300" layoutY="20" style="-fx-font-size: 24px;"/>
+
+    <!-- ComboBox Chọn vai trò -->
+    <Label text="Vai trò:" layoutX="200" layoutY="100"/>
+    <ComboBox fx:id="cboRole" layoutX="280" layoutY="95" prefWidth="200"/>
+
+    <!-- Label + TextField/Login hoặc TextField/Mã SV -->
+    <Label fx:id="lblLogin" text="Login:" layoutX="200" layoutY="160"/>
+    <TextField fx:id="txtLogin" layoutX="280" layoutY="155" prefWidth="200"/>
+    <TextField fx:id="txtMaSV" layoutX="280" layoutY="155" prefWidth="200" visible="false" managed="false"/>
+
+    <!-- Password -->
+    <Label text="Password:" layoutX="200" layoutY="220"/>
+    <PasswordField fx:id="txtPassword" layoutX="280" layoutY="215" prefWidth="200"/>
+
+    <!-- Nút Đăng nhập -->
+    <Button fx:id="btnLogin" text="Đăng nhập" layoutX="350" layoutY="280"/>
+
+    <!-- Label Thông báo lỗi -->
+    <Label fx:id="lblMessage" textFill="red" layoutX="280" layoutY="340"/>
+
+</AnchorPane>

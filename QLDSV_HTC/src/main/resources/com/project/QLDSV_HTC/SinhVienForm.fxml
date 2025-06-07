@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.project.QLDSV_HTC.controller.SinhVienController"
+            prefWidth="1000" prefHeight="700">
+
+    <Label text="Quản lý Sinh viên" layoutX="400" layoutY="20" style="-fx-font-size: 20px;"/>
+
+    <!-- Form nhập SV dưới dạng SubForm 2 cấp -->
+    <Label text="Lớp:" layoutX="50" layoutY="80"/>
+    <ComboBox fx:id="cboLop" layoutX="100" layoutY="75" prefWidth="200"/>
+
+    <Label text="Mã SV:" layoutX="350" layoutY="80"/>
+    <TextField fx:id="txtMaSV" layoutX="420" layoutY="75" prefWidth="180"/>
+
+    <Label text="Họ:" layoutX="650" layoutY="80"/>
+    <TextField fx:id="txtHo" layoutX="680" layoutY="75" prefWidth="150"/>
+
+    <Label text="Tên:" layoutX="850" layoutY="80"/>
+    <TextField fx:id="txtTen" layoutX="890" layoutY="75" prefWidth="100"/>
+
+    <Label text="Ngày Sinh:" layoutX="50" layoutY="130"/>
+    <DatePicker fx:id="dpNgaySinh" layoutX="130" layoutY="125"/>
+
+    <Label text="Địa Chỉ:" layoutX="300" layoutY="130"/>
+    <TextField fx:id="txtDiaChi" layoutX="360" layoutY="125" prefWidth="200"/>
+
+    <Label text="Phái:" layoutX="600" layoutY="130"/>
+    <ComboBox fx:id="cboPhai" layoutX="650" layoutY="125" prefWidth="100"/>
+
+    <Label text="Nghỉ học:" layoutX="800" layoutY="130"/>
+    <CheckBox fx:id="chkNghiHoc" layoutX="860" layoutY="130"/>
+
+    <Label text="Password:" layoutX="50" layoutY="180"/>
+    <PasswordField fx:id="txtPassword" layoutX="130" layoutY="175" prefWidth="200"/>
+
+    <HBox spacing="10" layoutX="50" layoutY="230">
+        <Button fx:id="btnAddSV" text="Thêm"/>
+        <Button fx:id="btnUpdateSV" text="Ghi"/>
+        <Button fx:id="btnDeleteSV" text="Xóa"/>
+        <Button fx:id="btnRefreshSV" text="Phục hồi"/>
+        <Button fx:id="btnCloseSV" text="Thoát"/>
+    </HBox>
+
+    <!-- Table hiển thị Sinh viên -->
+    <TableView fx:id="tableSV" layoutX="50" layoutY="290" prefWidth="900" prefHeight="380">
+        <columns>
+            <TableColumn fx:id="colMaSV" text="Mã SV" prefWidth="100"/>
+            <TableColumn fx:id="colHo" text="Họ" prefWidth="200"/>
+            <TableColumn fx:id="colTen" text="Tên" prefWidth="150"/>
+            <TableColumn fx:id="colPhai" text="Phái" prefWidth="80"/>
+            <TableColumn fx:id="colNgaySinh" text="Ngày Sinh" prefWidth="120"/>
+            <TableColumn fx:id="colDiaChi" text="Địa Chỉ" prefWidth="150"/>
+            <TableColumn fx:id="colNghiHoc" text="Nghỉ Học" prefWidth="80"/>
+            <TableColumn fx:id="colMaLop" text="Mã Lớp" prefWidth="100"/>
+        </columns>
+    </TableView>
+</AnchorPane>

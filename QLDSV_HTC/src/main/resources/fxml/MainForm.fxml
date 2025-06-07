@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.project.QLDSV_HTC.controller.MainController"
+            prefWidth="960" prefHeight="540">
+
+    <!-- Menu Bar -->
+    <top>
+        <MenuBar>
+            <menus>
+                <!-- Quản lý -->
+                <Menu text="Quản lý">
+                    <items>
+                        <MenuItem fx:id="menuKhoa"      text="Khoa"/>
+                        <MenuItem fx:id="menuLop"       text="Lớp"/>
+                        <MenuItem fx:id="menuSinhVien"  text="Sinh viên"/>
+                        <MenuItem fx:id="menuMonHoc"    text="Môn học"/>
+                        <MenuItem fx:id="menuGiangVien" text="Giảng viên"/>
+                        <MenuItem fx:id="menuLTC"       text="Lớp tín chỉ"/>
+                        <MenuItem fx:id="menuNhapDiem"  text="Nhập điểm"/>
+                        <MenuItem fx:id="menuDangKy"    text="Đăng ký tín chỉ"/>
+                    </items>
+                </Menu>
+
+                <!-- Báo cáo -->
+                <Menu text="Báo cáo">
+                    <items>
+                        <MenuItem fx:id="menuBaoCao1" text="DS Lớp tín chỉ"/>
+                        <MenuItem fx:id="menuBaoCao2" text="DS SV đăng ký"/>
+                        <MenuItem fx:id="menuBaoCao3" text="Bảng điểm LTC"/>
+                        <MenuItem fx:id="menuBaoCao4" text="Phiếu điểm SV"/>
+                        <MenuItem fx:id="menuBaoCao5" text="Đóng học phí"/>
+                        <MenuItem fx:id="menuBaoCao6" text="Bảng điểm tổng kết"/>
+                    </items>
+                </Menu>
+
+                <!-- Hệ thống -->
+                <Menu text="Hệ thống">
+                    <items>
+                        <MenuItem fx:id="menuUser"    text="Quản lý tài khoản"/>
+                        <MenuItem fx:id="menuBackup"  text="Sao lưu / Phục hồi"/>
+                        <SeparatorMenuItem/>
+                        <MenuItem fx:id="menuLogout"  text="Đăng xuất"/>
+                    </items>
+                </Menu>
+            </menus>
+        </MenuBar>
+    </top>
+
+    <!-- Content Pane: load sub-views vào đây -->
+    <center>
+        <AnchorPane fx:id="contentPane" />
+    </center>
+
+</BorderPane>

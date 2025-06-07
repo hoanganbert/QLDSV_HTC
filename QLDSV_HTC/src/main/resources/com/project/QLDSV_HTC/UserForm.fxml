@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.project.QLDSV_HTC.controller.UserController"
+            prefWidth="900" prefHeight="650">
+
+    <Label text="Quản lý Tài khoản" layoutX="350" layoutY="20" style="-fx-font-size: 20px;"/>
+
+    <Label text="Role:" layoutX="50" layoutY="80"/>
+    <ComboBox fx:id="cboRoleSelect" layoutX="100" layoutY="75" prefWidth="150"/>
+
+    <Label text="Khoa:" layoutX="300" layoutY="80"/>
+    <ComboBox fx:id="cboKhoa" layoutX="350" layoutY="75" prefWidth="200"/>
+
+    <Label text="Giảng viên:" layoutX="300" layoutY="130"/>
+    <ComboBox fx:id="cboGV" layoutX="380" layoutY="125" prefWidth="200"/>
+
+    <Label text="Sinh viên:" layoutX="300" layoutY="180"/>
+    <ComboBox fx:id="cboSV" layoutX="380" layoutY="175" prefWidth="200"/>
+
+    <Label text="Username:" layoutX="50" layoutY="130"/>
+    <TextField fx:id="txtUsername" layoutX="120" layoutY="125" prefWidth="150"/>
+
+    <Label text="Password:" layoutX="50" layoutY="180"/>
+    <PasswordField fx:id="txtPassword" layoutX="120" layoutY="175" prefWidth="150"/>
+
+    <Label text="Mã user:" layoutX="50" layoutY="230"/>
+    <TextField fx:id="txtMaUser" layoutX="120" layoutY="225" prefWidth="150"/>
+
+    <HBox spacing="10" layoutX="50" layoutY="280">
+        <Button fx:id="btnAddUser" text="Tạo tài khoản"/>
+        <Button fx:id="btnDeleteUser" text="Xóa tài khoản"/>
+        <Button fx:id="btnClose" text="Thoát"/>
+    </HBox>
+
+    <TableView fx:id="tableUsers" layoutX="50" layoutY="340" prefWidth="800" prefHeight="250">
+        <columns>
+            <TableColumn fx:id="colUsername" text="Username" prefWidth="200"/>
+            <TableColumn fx:id="colRole" text="Role" prefWidth="150"/>
+            <TableColumn fx:id="colMaKhoa" text="Mã Khoa" prefWidth="150"/>
+            <TableColumn fx:id="colMaGV" text="Mã GV" prefWidth="150"/>
+            <TableColumn fx:id="colMaSV" text="Mã SV" prefWidth="150"/>
+        </columns>
+    </TableView>
+</AnchorPane>

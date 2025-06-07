@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.cell.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.project.QLDSV_HTC.controller.BackupRestoreController"
+            prefWidth="900" prefHeight="650">
+
+    <Label text="Sao lưu / Phục hồi CSDL" layoutX="300" layoutY="20" style="-fx-font-size: 20px;"/>
+
+    <Label text="Chọn Database:" layoutX="50" layoutY="80"/>
+    <ComboBox fx:id="cboDatabases" layoutX="170" layoutY="75" prefWidth="200"/>
+
+    <Button fx:id="btnCreateDevice" text="Tạo Device" layoutX="400" layoutY="75"/>
+    <Button fx:id="btnBackup" text="Sao lưu" layoutX="510" layoutY="75"/>
+    <Button fx:id="btnRestore" text="Phục hồi" layoutX="610" layoutY="75"/>
+
+    <CheckBox fx:id="chkPointInTime" text="Phục hồi theo thời gian" layoutX="50" layoutY="130"/>
+    <DatePicker fx:id="dpRestoreDate" layoutX="230" layoutY="125" disable="true"/>
+    <Spinner fx:id="spRestoreHour" layoutX="380" layoutY="125" prefWidth="60" disable="true"/>
+    <Spinner fx:id="spRestoreMinute" layoutX="450" layoutY="125" prefWidth="60" disable="true"/>
+
+    <TableView fx:id="tableBackups" layoutX="50" layoutY="180" prefWidth="800" prefHeight="350">
+        <columns>
+            <TableColumn fx:id="colBackupSet" text="BackupSetID" prefWidth="100"/>
+            <TableColumn fx:id="colMediaName" text="MediaName" prefWidth="300"/>
+            <TableColumn fx:id="colBackupDateTime" text="BackupDateTime" prefWidth="200"/>
+            <TableColumn fx:id="colUserName" text="UserName" prefWidth="200"/>
+        </columns>
+    </TableView>
+
+    <Button fx:id="btnClose" text="Thoát" layoutX="400" layoutY="550"/>
+</AnchorPane>

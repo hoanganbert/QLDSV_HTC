@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.project.QLDSV_HTC.controller.GiangVienController"
+            prefWidth="900" prefHeight="650">
+
+    <Label text="Quản lý Giảng viên" layoutX="350" layoutY="20" style="-fx-font-size: 20px;"/>
+
+    <Label text="Mã GV:" layoutX="100" layoutY="80"/>
+    <TextField fx:id="txtMaGV" layoutX="160" layoutY="75" prefWidth="180"/>
+
+    <Label text="Họ:" layoutX="360" layoutY="80"/>
+    <TextField fx:id="txtHo" layoutX="400" layoutY="75" prefWidth="150"/>
+
+    <Label text="Tên:" layoutX="580" layoutY="80"/>
+    <TextField fx:id="txtTen" layoutX="620" layoutY="75" prefWidth="150"/>
+
+    <Label text="Khoa:" layoutX="100" layoutY="130"/>
+    <ComboBox fx:id="cboKhoa" layoutX="160" layoutY="125" prefWidth="200"/>
+
+    <HBox spacing="10" layoutX="100" layoutY="180">
+        <Button fx:id="btnAddGV" text="Thêm"/>
+        <Button fx:id="btnUpdateGV" text="Ghi"/>
+        <Button fx:id="btnDeleteGV" text="Xóa"/>
+        <Button fx:id="btnRefreshGV" text="Phục hồi"/>
+        <Button fx:id="btnCloseGV" text="Thoát"/>
+    </HBox>
+
+    <TableView fx:id="tableGV" layoutX="100" layoutY="240" prefWidth="700" prefHeight="360">
+        <columns>
+            <TableColumn fx:id="colMaGV" text="Mã GV" prefWidth="150"/>
+            <TableColumn fx:id="colHo" text="Họ" prefWidth="200"/>
+            <TableColumn fx:id="colTen" text="Tên" prefWidth="150"/>
+            <TableColumn fx:id="colMaKhoa" text="Mã Khoa" prefWidth="200"/>
+        </columns>
+    </TableView>
+</AnchorPane>

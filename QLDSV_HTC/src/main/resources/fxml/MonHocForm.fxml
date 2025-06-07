@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.project.QLDSV_HTC.controller.MonHocController"
+            prefWidth="800" prefHeight="600">
+
+    <Label text="Quản lý Môn học" layoutX="320" layoutY="20" style="-fx-font-size: 20px;"/>
+
+    <Label text="Mã MH:" layoutX="100" layoutY="80"/>
+    <TextField fx:id="txtMaMH" layoutX="160" layoutY="75" prefWidth="180"/>
+
+    <Label text="Tên MH:" layoutX="360" layoutY="80"/>
+    <TextField fx:id="txtTenMH" layoutX="430" layoutY="75" prefWidth="200"/>
+
+	<Label text="Số tiết LT:" layoutX="100" layoutY="130"/>
+	<TextField fx:id="txtSoTietLT" layoutX="180" layoutY="125" prefWidth="100"/>
+	
+	<Label text="Số tiết TH:" layoutX="300" layoutY="130"/>
+	<TextField fx:id="txtSoTietTH" layoutX="360" layoutY="125" prefWidth="100"/>
+
+    <HBox spacing="10" layoutX="100" layoutY="180">
+        <Button fx:id="btnAdd" text="Thêm"/>
+        <Button fx:id="btnUpdate" text="Ghi"/>
+        <Button fx:id="btnDelete" text="Xóa"/>
+        <Button fx:id="btnRefresh" text="Phục hồi"/>
+        <Button fx:id="btnThoat" text="Thoát"/>
+    </HBox>
+
+    <TableView fx:id="tableMH" layoutX="100" layoutY="240" prefWidth="600" prefHeight="300">
+        <columns>
+            <TableColumn fx:id="colMaMH" text="Mã MH" prefWidth="200"/>
+            <TableColumn fx:id="colTenMH" text="Tên MH" prefWidth="300"/>
+			<TableColumn fx:id="colSoTietLT" text="Số tiết LT" prefWidth="100"/>
+			<TableColumn fx:id="colSoTietTH" text="Số tiết TH" prefWidth="100"/>        </columns>
+    </TableView>
+</AnchorPane>

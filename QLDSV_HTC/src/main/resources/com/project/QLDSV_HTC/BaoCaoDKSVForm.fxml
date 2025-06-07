@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.project.QLDSV_HTC.controller.BaoCaoDKSVController"
+            prefWidth="900" prefHeight="650">
+
+    <Label text="Báo cáo DS SV đăng ký LTC" layoutX="300" layoutY="20" style="-fx-font-size: 20px;"/>
+
+    <Label text="Niên khóa:" layoutX="50" layoutY="80"/>
+    <ComboBox fx:id="cboNienKhoa" layoutX="130" layoutY="75" prefWidth="150"/>
+
+    <Label text="Học kỳ:" layoutX="320" layoutY="80"/>
+    <ComboBox fx:id="cboHocKy" layoutX="380" layoutY="75" prefWidth="80"/>
+
+    <Label text="Môn học:" layoutX="480" layoutY="80"/>
+    <ComboBox fx:id="cboMonHoc" layoutX="550" layoutY="75" prefWidth="180"/>
+
+    <Label text="Nhóm:" layoutX="750" layoutY="80"/>
+    <ComboBox fx:id="cboNhom" layoutX="790" layoutY="75" prefWidth="80"/>
+
+    <Button fx:id="btnChay" text="Chạy" layoutX="50" layoutY="130"/>
+
+    <TableView fx:id="tableBaoCao" layoutX="50" layoutY="180" prefWidth="800" prefHeight="380">
+        <columns>
+            <TableColumn fx:id="colSTT" text="STT" prefWidth="60"/>
+            <TableColumn fx:id="colMaSV" text="Mã SV" prefWidth="120"/>
+            <TableColumn fx:id="colHo" text="Họ" prefWidth="200"/>
+            <TableColumn fx:id="colTen" text="Tên" prefWidth="150"/>
+            <TableColumn fx:id="colPhai" text="Phái" prefWidth="80"/>
+            <TableColumn fx:id="colMaLop" text="Mã lớp" prefWidth="120"/>
+        </columns>
+    </TableView>
+
+    <HBox spacing="10" layoutX="350" layoutY="580">
+        <Button fx:id="btnXuatExcel" text="Xuất Excel"/>
+        <Button fx:id="btnClose" text="Thoát"/>
+    </HBox>
+</AnchorPane>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.project.QLDSV_HTC.controller.DangKyController"
+            prefWidth="900" prefHeight="650">
+
+    <Label text="Đăng ký Lớp tín chỉ" layoutX="350" layoutY="20" style="-fx-font-size: 20px;"/>
+
+    <!-- Thông tin SV -->
+    <Label text="Mã SV:" layoutX="50" layoutY="80"/>
+    <Label fx:id="lblMaSV" layoutX="120" layoutY="80"/>
+
+    <Label text="Họ tên:" layoutX="250" layoutY="80"/>
+    <Label fx:id="lblHoTen" layoutX="310" layoutY="80"/>
+
+    <Label text="Mã Lớp:" layoutX="500" layoutY="80"/>
+    <Label fx:id="lblMaLop" layoutX="570" layoutY="80"/>
+
+    <!-- Chọn niên khóa, học kỳ -->
+    <Label text="Niên khóa:" layoutX="50" layoutY="130"/>
+    <ComboBox fx:id="cboNienKhoa" layoutX="120" layoutY="125" prefWidth="150"/>
+
+    <Label text="Học kỳ:" layoutX="300" layoutY="130"/>
+    <ComboBox fx:id="cboHocKy" layoutX="350" layoutY="125" prefWidth="80"/>
+
+    <Button fx:id="btnChay" text="Chạy" layoutX="500" layoutY="125"/>
+
+    <!-- Table hiển thị danh sách lớp tín chỉ -->
+    <TableView fx:id="tableDK" layoutX="50" layoutY="200" prefWidth="800" prefHeight="350">
+        <columns>
+            <TableColumn fx:id="colSelect" text="Chọn" prefWidth="80"/>
+            <TableColumn fx:id="colMaMH" text="Mã MH" prefWidth="150"/>
+            <TableColumn fx:id="colTenMH" text="Tên MH" prefWidth="300"/>
+            <TableColumn fx:id="colNhom" text="Nhóm" prefWidth="80"/>
+            <TableColumn fx:id="colHoTenGV" text="Họ tên GV" prefWidth="190"/>
+            <TableColumn fx:id="colSoSVDaDK" text="SV đã đăng ký" prefWidth="100"/>
+        </columns>
+    </TableView>
+
+    <HBox spacing="10" layoutX="350" layoutY="580">
+        <Button fx:id="btnGhi" text="Ghi"/>
+        <Button fx:id="btnClose" text="Thoát"/>
+    </HBox>
+</AnchorPane>
