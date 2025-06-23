@@ -87,37 +87,37 @@ public class LoginController {
                 lblMessage.setText("Hãy nhập Login của Giảng viên.");
                 return;
             }
-            // Lấy user từ DB
+            // 1. Lấy user từ DB
             User user = userService.findByUsername(username);
-            if (user == null
-                || !user.getPassword().equals(password)
-                || !"GIANGVIEN".equals(user.getRole())) {
-                lblMessage.setText("Login hoặc mật khẩu không đúng, hoặc không phải Giảng viên.");
+            if (user == null || !user.getPassword().equals(password)) {
+                lblMessage.setText("Login hoặc mật khẩu không đúng.");
                 return;
             }
-
-            // --- ĐẶT QUYỀN ĐẶT BIỆT CHO MỘT SỐ GV ---
-            String maGV = user.getMaGV().trim();
-            if ("GV03".equals(maGV)) {
-                // GV03 có quyền như PGV
-                appContext.setRole("PGV");
-                appContext.setMaKhoa(null);
-                appContext.setMaGV(null);
+            // 2. Check xem role trả về có nằm trong 3 nhóm không
+            String dbRole = user.getRole();  // sẽ là "GIANGVIEN", "PGV" hoặc "KHOA"
+            if (!Arrays.asList("GIANGVIEN","PGV","KHOA").contains(dbRole)) {
+                lblMessage.setText("Tài khoản này không thuộc nhóm Giảng viên.");
+                return;
             }
-            else if ("GV04".equals(maGV)) {
-                // GV04 có quyền như KHOA
-                appContext.setRole("KHOA");
-                // nạp mã khoa từ bảng User (user.getMaKhoa()) hoặc hard-code nếu muốn
-                appContext.setMaKhoa(user.getMaKhoa());
-                appContext.setMaGV(null);
+            // 3. Thiết lập context dựa trên đúng role từ DB
+            appContext.setRole(dbRole);
+            switch (dbRole) {
+                case "PGV":
+                    // PGV không thuộc khoa nào cả
+                    appContext.setMaKhoa(null);
+                    appContext.setMaGV(null);
+                    break;
+                case "KHOA":
+                    // KHOA: lấy mã khoa từ cột MaKhoa
+                    appContext.setMaKhoa(user.getMaKhoa());
+                    appContext.setMaGV(null);
+                    break;
+                default: // "GIANGVIEN"
+                    appContext.setMaGV(user.getMaGV());
+                    // Giảng viên bình thường chỉ nhìn khoa của mình
+                    appContext.setMaKhoa(user.getMaKhoa());
+                    break;
             }
-            else {
-                // Các GV khác vẫn là GIANGVIEN bình thường
-                appContext.setRole("GIANGVIEN");
-                appContext.setMaGV(maGV);
-            }
-
-            // Tiếp tục mở MainForm
             openMainWindow();
         }
 
