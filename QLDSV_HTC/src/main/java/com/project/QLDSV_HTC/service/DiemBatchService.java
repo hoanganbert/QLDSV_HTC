@@ -1,14 +1,20 @@
 package com.project.QLDSV_HTC.service;
 
-import com.project.QLDSV_HTC.dto.DiemDTO;
 import com.microsoft.sqlserver.jdbc.SQLServerCallableStatement;
-import com.microsoft.sqlserver.jdbc.SQLServerConnection;
 import com.microsoft.sqlserver.jdbc.SQLServerDataTable;
+import com.project.QLDSV_HTC.dto.DiemDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.jdbc.core.CallableStatementCreator;
+import org.springframework.jdbc.core.CallableStatementCallback;
+import com.microsoft.sqlserver.jdbc.SQLServerConnection;
+import com.microsoft.sqlserver.jdbc.SQLServerCallableStatement;
 
-import java.sql.Types;
+
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 
 @Service
@@ -18,38 +24,51 @@ public class DiemBatchService {
     private JdbcTemplate jdbcTemplate;
 
     /**
-     * Gọi stored procedure sp_CapNhatDiemBangBatch với một TVP (DiemTableType).
+     * Gửi lên 1 batch điểm của nhiều sinh viên bằng TVP.
+     *
+     * @param maLTC  mã lớp tín chỉ
+     * @param dsDiem danh sách DiemDTO (có getMaSV(), getDiemCC(), getDiemGK(), getDiemCK())
      */
-    public void capNhatDiemBatch(Integer maLTC, List<DiemDTO> dsDiem) throws Exception {
-        // 1) Chuẩn bị SQLServerDataTable (TVP)
+    public void capNhatDiemBatch(Integer maLTC, List<DiemDTO> dsDiem) throws SQLException {
+        // 1) Tạo TVP đúng cấu trúc TYPE dbo.DiemTableType
         SQLServerDataTable tvp = new SQLServerDataTable();
-        tvp.addColumnMetadata("MALTC", Types.INTEGER);
-        tvp.addColumnMetadata("MASV", Types.NCHAR);
-        tvp.addColumnMetadata("DIEM_CC", Types.INTEGER);
-        tvp.addColumnMetadata("DIEM_GK", Types.FLOAT);
-        tvp.addColumnMetadata("DIEM_CK", Types.FLOAT);
+        // Tên cột phải khớp EXACT với định nghĩa TYPE trên SQL Server
+        tvp.addColumnMetadata("MaLTC",   java.sql.Types.INTEGER);
+        tvp.addColumnMetadata("MaSV",    java.sql.Types.NCHAR);
+        tvp.addColumnMetadata("Diem_CC", java.sql.Types.INTEGER);
+        tvp.addColumnMetadata("Diem_GK", java.sql.Types.FLOAT);
+        tvp.addColumnMetadata("Diem_CK", java.sql.Types.FLOAT);
 
+        // 2) Đổ dữ liệu vào TVP
         for (DiemDTO dto : dsDiem) {
-            Integer diemCC = dto.getDiemCC() == null ? 0 : dto.getDiemCC();
-            Double diemGK  = dto.getDiemGK()  == null ? 0.0 : dto.getDiemGK();
-            Double diemCK  = dto.getDiemCK()  == null ? 0.0 : dto.getDiemCK();
-            tvp.addRow(maLTC, dto.getMaSV(), diemCC, diemGK, diemCK);
+            // (Đã đảm bảo dto.getDiemXX() là primitive nên không cần check null nữa)
+            tvp.addRow(
+                maLTC,
+                dto.getMaSV(),
+                dto.getDiemCC(),
+                dto.getDiemGK(),
+                dto.getDiemCK()
+            );
         }
 
-        // 2) Gọi stored procedure
-        String sql = "{call sp_CapNhatDiemBangBatch(?)}";
+        // 3) Gọi thủ tục sp_CapNhatDiemBatch bằng CallableStatement + unwrap
+        final String sql = "{call dbo.sp_CapNhatDiemBatch(?, ?)}";
 
-        jdbcTemplate.execute((java.sql.Connection connection) -> {
-            // a) Bóc unwrap ra SQLServerConnection của driver SQL Server
-            SQLServerConnection sqlServerConn = connection.unwrap(SQLServerConnection.class);
-
-            // b) Tạo CallableStatement từ SQLServerConnection
-            SQLServerCallableStatement cs = (SQLServerCallableStatement) sqlServerConn.prepareCall(sql);
-
-            // c) Gắn TVP vào vị trí tham số
-            cs.setStructured(1, "DiemTableType", tvp);
-
-            return cs; // phải trả về cs để JdbcTemplate biết “mình đã hoàn thành”
-        });
+        jdbcTemplate.execute(
+		  (CallableStatementCreator) conn -> {
+		      // 1) unwrap proxy Hikari về SQLServerConnection gốc
+		      SQLServerConnection sqlConn = conn.unwrap(SQLServerConnection.class);
+		      // 2) từ SQLServerConnection mới prepareCall và cast
+		      SQLServerCallableStatement cs =
+		        (SQLServerCallableStatement) sqlConn.prepareCall(sql);
+		      cs.setInt(1, maLTC);
+		      cs.setStructured(2, "dbo.DiemTableType", tvp);
+		      return cs;
+		  },
+		  (CallableStatementCallback<Void>) cs -> {
+		      cs.execute();
+		      return null;
+		  }
+		);
     }
 }

@@ -67,7 +67,6 @@ public class DangKyController {
         Sinhvien sv = optSv.get();
         lblMaSV.setText(maSV);
         lblHoTen.setText(sv.getHo() + " " + sv.getTen());
-        // Lấy mã lớp của SV (từ quan hệ @ManyToOne)
         lblMaLop.setText(sv.getLop().getMaLop());
 
         // --------------- 3. Load ComboBox Niên Khóa, Học Kỳ -----------------
@@ -75,14 +74,22 @@ public class DangKyController {
         cboHocKy.setItems(FXCollections.observableArrayList(1, 2, 3));
 
         // --------------- 4. Cấu hình TableView -----------------
-        colSelect.setCellValueFactory(new PropertyValueFactory<>("selected"));
+        // a) CellValueFactory bind đến BooleanProperty
+        colSelect.setCellValueFactory(cell -> cell.getValue().selectedProperty());
+        // b) CellFactory cho checkbox
         colSelect.setCellFactory(CheckBoxTableCell.forTableColumn(colSelect));
+        // c) Cho phép chỉnh sửa checkbox
+        tableDK.setEditable(true);
+        colSelect.setEditable(true);
+
+        // d) Các cột khác
         colMaMH.setCellValueFactory(new PropertyValueFactory<>("maMH"));
         colTenMH.setCellValueFactory(new PropertyValueFactory<>("tenMH"));
         colNhom.setCellValueFactory(new PropertyValueFactory<>("nhom"));
         colHoTenGV.setCellValueFactory(new PropertyValueFactory<>("hoTenGV"));
         colSoSVDaDK.setCellValueFactory(new PropertyValueFactory<>("soSVDaDK"));
 
+        // e) Gán data
         tableDK.setItems(dsDK);
 
         // --------------- 5. Nút “Chạy” (lọc danh sách) -----------------
@@ -91,9 +98,7 @@ public class DangKyController {
         // --------------- 6. Nút “Ghi” (cập nhật đăng ký/hủy đăng ký) -----------------
         btnGhi.setOnAction(e -> {
             for (DangKyDTO dto : dsDK) {
-                // Kêu service cập nhật: nếu selected=true thì tạo đăng ký mới hoặc hủyDangKy=false,
-                // nếu selected=false thì set huyDangKy=true
-                ltcService.capNhatDangKy(appContext.getMaSV(), dto.getMaLTC(), dto.getSelected());
+                ltcService.capNhatDangKy(appContext.getMaSV(), dto.getMaLTC(), dto.isSelected());
             }
             showAlert("Thành công", "Cập nhật đăng ký thành công.", Alert.AlertType.INFORMATION);
             chayDangKy(); // reload lại sau khi lưu

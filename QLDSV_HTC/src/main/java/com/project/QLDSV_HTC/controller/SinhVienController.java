@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.Deque;
+import java.util.ArrayDeque;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,265 +53,175 @@ public class SinhVienController {
     private ObservableList<Lop> dsLop = FXCollections.observableArrayList();
     private ObservableList<String> dsPhai = FXCollections.observableArrayList("Nam", "Nữ");
 
+    // Undo stack lưu trạng thái trước mỗi thao tác Update/Delete
+    private Deque<Sinhvien> undoStack = new ArrayDeque<>();
+
     @Autowired private SinhVienService sinhVienService;
     @Autowired private LopService lopService;
     @Autowired private AppContextHolder appContext;
 
     @FXML
     public void initialize() {
-        // Chỉ PGV và KHOA mới được quản lý SV
         String role = appContext.getRole();
         if (!"PGV".equals(role) && !"KHOA".equals(role)) {
-            disableForm();
-            showAlert("Truy cập bị từ chối", "Bạn không có quyền quản lý Sinh viên.", Alert.AlertType.WARNING);
+            disableForm(); showAlert("Truy cập bị từ chối", "Bạn không có quyền quản lý Sinh viên.", Alert.AlertType.WARNING);
             return;
         }
 
-        // 1. Load ComboBox Lớp
-        dsLop.clear();
-        dsLop.addAll(lopService.getAllLop());
+        // Load dsLop và dsPhai
+        dsLop.clear(); dsLop.addAll(lopService.getAllLop());
         if ("KHOA".equals(role)) {
-            // Nếu là KHOA, chỉ hiển thị các lớp thuộc khoa đăng nhập
             String maKhoaLogin = appContext.getMaKhoa();
             dsLop = FXCollections.observableArrayList(
-                dsLop.stream()
-                     .filter(l -> l.getKhoa().getMaKhoa().equals(maKhoaLogin))
-                     .collect(Collectors.toList())
+                dsLop.stream().filter(l -> l.getKhoa().getMaKhoa().equals(maKhoaLogin)).collect(Collectors.toList())
             );
         }
         cboLop.setItems(dsLop);
-
-        // 2. Load ComboBox Phái
         cboPhai.setItems(dsPhai);
-
-        // 3. Cấu hình TableView Sinh viên
+        
+        // Cấu hình table
         colMaSV.setCellValueFactory(new PropertyValueFactory<>("maSV"));
         colHo.setCellValueFactory(new PropertyValueFactory<>("ho"));
         colTen.setCellValueFactory(new PropertyValueFactory<>("ten"));
-
-        // Col Phái: chuyển boolean → "Nam"/"Nữ"
-        colPhai.setCellValueFactory(cell -> {
-            boolean phaiBool = cell.getValue().isPhai();     // isPhai() trả về boolean
-            String phaiStr = phaiBool ? "Nữ" : "Nam";
-            return new ReadOnlyStringWrapper(phaiStr);
-        });
-
-        // Col Ngày sinh: nếu trong entity dùng LocalDate
+        colPhai.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().isPhai()?"Nữ":"Nam"));
         colNgaySinh.setCellValueFactory(cell -> {
-            LocalDate ngay = cell.getValue().getNgaySinh();  // getNgaySinh() trả về LocalDate
-            String text = (ngay == null) ? "" : ngay.toString();
-            return new ReadOnlyStringWrapper(text);
+            LocalDate d = cell.getValue().getNgaySinh();
+            return new ReadOnlyStringWrapper(d==null?"":d.toString());
         });
-
         colDiaChi.setCellValueFactory(new PropertyValueFactory<>("diaChi"));
-        colNghiHoc.setCellValueFactory(new PropertyValueFactory<>("dangNghiHoc")); 
+        colNghiHoc.setCellValueFactory(new PropertyValueFactory<>("dangNghiHoc"));
         colMaLop.setCellValueFactory(cell -> {
-            Lop lop = cell.getValue().getLop();
-            String ma = (lop == null ? "" : lop.getMaLop());
-            return new ReadOnlyStringWrapper(ma);
+            Lop l = cell.getValue().getLop();
+            return new ReadOnlyStringWrapper(l==null?"":l.getMaLop());
         });
 
-        tableSV.setItems(dsSV);
-
-        // 4. Khi chọn 1 SV trong table, đổ lên form
+        // Selection listener
         tableSV.getSelectionModel().selectedItemProperty().addListener((obs, old, newSV) -> {
-            if (newSV != null) {
-                // Mã SV, Họ, Tên
-                txtMaSV.setText(newSV.getMaSV());
-                txtHo.setText(newSV.getHo());
-                txtTen.setText(newSV.getTen());
-
-                // Ngày sinh (LocalDate)
-                dpNgaySinh.setValue(newSV.getNgaySinh());
-
-                // Địa chỉ
-                txtDiaChi.setText(newSV.getDiaChi());
-
-                // Phái: boolean → "Nam"/"Nữ"
-                cboPhai.getSelectionModel().select(newSV.isPhai() ? "Nữ" : "Nam");
-
-                // Đang nghỉ học
-                chkNghiHoc.setSelected(newSV.isDangNghiHoc());
-
-                // Password
-                txtPassword.setText(newSV.getPassword() == null ? "" : newSV.getPassword());
-
-                // Chọn ComboBox Lớp dựa vào đối tượng Lop trong Sinhvien
-                Lop lopOfSV = newSV.getLop();
-                if (lopOfSV != null) {
-                    for (Lop l : dsLop) {
-                        if (l.getMaLop().equals(lopOfSV.getMaLop())) {
-                            cboLop.getSelectionModel().select(l);
-                            break;
-                        }
-                    }
-                }
-
-                // Khi sửa SV, không cho đổi mã
-                txtMaSV.setDisable(true);
-            }
+            if (newSV != null) bindForm(newSV);
         });
 
-        // 5. Khi chọn 1 Lớp, load DS SV theo Lớp đó
-        cboLop.getSelectionModel().selectedItemProperty().addListener((obs, old, newLop) -> {
-            if (newLop != null) {
-                loadSVTheoLop(newLop.getMaLop());
-                clearForm();
-            } else {
-                dsSV.clear();
-            }
-        });
+        // Add SV
+        btnAddSV.setOnAction(e -> addSinhVien());
 
-        // 6. Nút Thêm SV
-        btnAddSV.setOnAction(e -> {
-            Lop lop = cboLop.getSelectionModel().getSelectedItem();
-            String ma = txtMaSV.getText().trim();
-            String ho = txtHo.getText().trim();
-            String ten = txtTen.getText().trim();
-            LocalDate ns = dpNgaySinh.getValue();
-            String dc = txtDiaChi.getText().trim();
-            String phaiStr = cboPhai.getValue();
-            boolean phaiBool = "Nữ".equals(phaiStr);    // chuyển "Nam"/"Nữ" → boolean
-            boolean nghiHoc = chkNghiHoc.isSelected();
-            String pwd = txtPassword.getText().trim();
-
-            if (lop == null || ma.isEmpty() || ho.isEmpty() || ten.isEmpty()
-                    || ns == null || dc.isEmpty() || phaiStr == null) {
-                showAlert("Lỗi", "Phải nhập đầy đủ thông tin SV.", Alert.AlertType.ERROR);
-                return;
-            }
-            if (sinhVienService.existsById(ma)) {
-                showAlert("Lỗi", "Mã SV đã tồn tại.", Alert.AlertType.WARNING);
-                return;
-            }
-
-            Sinhvien sv = new Sinhvien();
-            sv.setMaSV(ma);
-            sv.setHo(ho);
-            sv.setTen(ten);
-            sv.setNgaySinh(ns);            // dùng LocalDate trực tiếp
-            sv.setDiaChi(dc);
-            sv.setPhai(phaiBool);
-            sv.setDangNghiHoc(nghiHoc);
-            sv.setPassword(pwd);
-            sv.setLop(lop);
-
-            sinhVienService.save(sv);
-
-            loadSVTheoLop(lop.getMaLop());
-            clearForm();
-        });
-
-        // 7. Nút Ghi (Update) SV
+        // Update SV
         btnUpdateSV.setOnAction(e -> {
             Sinhvien sel = tableSV.getSelectionModel().getSelectedItem();
-            if (sel == null) {
-                showAlert("Thông báo", "Chọn SV cần sửa.", Alert.AlertType.WARNING);
-                return;
-            }
-            String ho = txtHo.getText().trim();
-            String ten = txtTen.getText().trim();
-            LocalDate ns = dpNgaySinh.getValue();
-            String dc = txtDiaChi.getText().trim();
-            String phaiStr = cboPhai.getValue();
-            boolean phaiBool = "Nữ".equals(phaiStr);
-            boolean nghiHoc = chkNghiHoc.isSelected();
-            String pwd = txtPassword.getText().trim();
-            Lop lop = cboLop.getSelectionModel().getSelectedItem();
-
-            if (ho.isEmpty() || ten.isEmpty() || ns == null
-                    || dc.isEmpty() || phaiStr == null || lop == null) {
-                showAlert("Lỗi", "Phải nhập đầy đủ thông tin SV.", Alert.AlertType.ERROR);
-                return;
-            }
-
-            sel.setHo(ho);
-            sel.setTen(ten);
-            sel.setNgaySinh(ns);
-            sel.setDiaChi(dc);
-            sel.setPhai(phaiBool);
-            sel.setDangNghiHoc(nghiHoc);
-            sel.setPassword(pwd);
-            sel.setLop(lop);
-
+            if (sel==null) { showAlert("Thông báo","Chọn SV cần sửa.",Alert.AlertType.WARNING); return; }
+            undoStack.push(new Sinhvien(sel));
+            applyFormTo(sel);
             sinhVienService.save(sel);
-
-            loadSVTheoLop(lop.getMaLop());
-            clearForm();
+            reloadSV(); clearForm();
         });
 
-        // 8. Nút Xóa SV
+        // Delete SV
         btnDeleteSV.setOnAction(e -> {
             Sinhvien sel = tableSV.getSelectionModel().getSelectedItem();
-            if (sel == null) {
-                showAlert("Thông báo", "Chọn SV cần xóa.", Alert.AlertType.WARNING);
-                return;
-            }
-            Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-            confirm.setTitle("Xác nhận");
-            confirm.setContentText("Bạn có chắc muốn xóa SV " + sel.getMaSV() + "?");
-            if (confirm.showAndWait().filter(b -> b == ButtonType.OK).isPresent()) {
+            if (sel==null) { showAlert("Thông báo","Chọn SV cần xóa.",Alert.AlertType.WARNING); return; }
+            Alert c = new Alert(Alert.AlertType.CONFIRMATION);
+            c.setTitle("Xác nhận"); c.setContentText("Bạn có chắc muốn xóa SV " + sel.getMaSV() + "?");
+            if (c.showAndWait().filter(b->b==ButtonType.OK).isPresent()) {
+                undoStack.push(new Sinhvien(sel));
                 sinhVienService.delete(sel.getMaSV());
-                loadSVTheoLop(sel.getLop().getMaLop());
-                clearForm();
+                reloadSV(); clearForm();
             }
         });
 
-        // 9. Nút Phục hồi (Refresh)
+        // Undo SV
         btnRefreshSV.setOnAction(e -> {
-            clearForm();
-            Lop lop = cboLop.getSelectionModel().getSelectedItem();
-            if (lop != null) {
-                loadSVTheoLop(lop.getMaLop());
+            if (!undoStack.isEmpty()) {
+                Sinhvien prev = undoStack.pop();
+                bindForm(prev);
+                sinhVienService.save(prev);
+                reloadSV();
+            } else {
+                clearForm(); reloadSV();
             }
         });
 
-        // 10. Nút Thoát
         btnCloseSV.setOnAction(e -> btnCloseSV.getScene().getWindow().hide());
+    }
+
+    private void reloadSV() {
+        Lop lop = cboLop.getSelectionModel().getSelectedItem();
+        if (lop!=null) loadSVTheoLop(lop.getMaLop());
     }
 
     private void loadSVTheoLop(String maLop) {
         List<Sinhvien> list = sinhVienService.getSVTheoLop(maLop);
-        dsSV.setAll(list);
-        tableSV.setItems(dsSV);
+        tableSV.setItems(FXCollections.observableArrayList(list));
     }
 
+    private void bindForm(Sinhvien sv) {
+        txtMaSV.setText(sv.getMaSV()); txtHo.setText(sv.getHo()); txtTen.setText(sv.getTen());
+        dpNgaySinh.setValue(sv.getNgaySinh()); txtDiaChi.setText(sv.getDiaChi());
+        cboPhai.getSelectionModel().select(sv.isPhai()?"Nữ":"Nam");
+        chkNghiHoc.setSelected(sv.isDangNghiHoc()); txtPassword.setText(sv.getPassword());
+        cboLop.getSelectionModel().select(sv.getLop()); txtMaSV.setDisable(true);
+    }
+
+    private void applyFormTo(Sinhvien sel) {
+        sel.setHo(txtHo.getText().trim()); sel.setTen(txtTen.getText().trim());
+        sel.setNgaySinh(dpNgaySinh.getValue()); sel.setDiaChi(txtDiaChi.getText().trim());
+        sel.setPhai("Nữ".equals(cboPhai.getValue())); sel.setDangNghiHoc(chkNghiHoc.isSelected());
+        sel.setPassword(txtPassword.getText().trim()); sel.setLop(cboLop.getValue());
+    }
+
+    private void addSinhVien() {
+        Lop lop = cboLop.getSelectionModel().getSelectedItem();
+        String ma = txtMaSV.getText().trim();
+        String ho = txtHo.getText().trim();
+        String ten = txtTen.getText().trim();
+        LocalDate ns = dpNgaySinh.getValue();
+        String dc = txtDiaChi.getText().trim();
+        String phaiStr = cboPhai.getValue();
+        boolean phaiBool = "Nữ".equals(phaiStr);
+        boolean nghiHoc = chkNghiHoc.isSelected();
+        String pwd = txtPassword.getText().trim();
+
+        if (lop == null || ma.isEmpty() || ho.isEmpty() || ten.isEmpty()
+                || ns == null || dc.isEmpty() || phaiStr == null) {
+            showAlert("Lỗi", "Phải nhập đầy đủ thông tin SV.", Alert.AlertType.ERROR);
+            return;
+        }
+        if (sinhVienService.existsById(ma)) {
+            showAlert("Lỗi", "Mã SV đã tồn tại.", Alert.AlertType.WARNING);
+            return;
+        }
+
+        Sinhvien sv = new Sinhvien();
+        sv.setMaSV(ma);
+        sv.setHo(ho);
+        sv.setTen(ten);
+        sv.setNgaySinh(ns);
+        sv.setDiaChi(dc);
+        sv.setPhai(phaiBool);
+        sv.setDangNghiHoc(nghiHoc);
+        sv.setPassword(pwd);
+        sv.setLop(lop);
+
+        sinhVienService.save(sv);
+        // Reload lại danh sách SV trong lớp đang chọn
+        loadSVTheoLop(lop.getMaLop());
+        clearForm();
+    }
+
+
     private void clearForm() {
-        txtMaSV.clear();
-        txtHo.clear();
-        txtTen.clear();
-        dpNgaySinh.setValue(null);
-        txtDiaChi.clear();
-        cboPhai.getSelectionModel().clearSelection();
-        chkNghiHoc.setSelected(false);
-        txtPassword.clear();
-        txtMaSV.setDisable(false);
+        txtMaSV.clear(); txtHo.clear(); txtTen.clear(); dpNgaySinh.setValue(null);
+        txtDiaChi.clear(); cboPhai.getSelectionModel().clearSelection(); chkNghiHoc.setSelected(false);
+        txtPassword.clear(); txtMaSV.setDisable(false);
         tableSV.getSelectionModel().clearSelection();
     }
 
     private void disableForm() {
-        cboLop.setDisable(true);
-        txtMaSV.setDisable(true);
-        txtHo.setDisable(true);
-        txtTen.setDisable(true);
-        dpNgaySinh.setDisable(true);
-        txtDiaChi.setDisable(true);
-        cboPhai.setDisable(true);
-        chkNghiHoc.setDisable(true);
-        txtPassword.setDisable(true);
-        btnAddSV.setDisable(true);
-        btnUpdateSV.setDisable(true);
-        btnDeleteSV.setDisable(true);
-        btnRefreshSV.setDisable(true);
-        btnCloseSV.setText("Đóng");
-        tableSV.setDisable(true);
+        cboLop.setDisable(true); txtMaSV.setDisable(true); txtHo.setDisable(true);
+        txtTen.setDisable(true); dpNgaySinh.setDisable(true); txtDiaChi.setDisable(true);
+        cboPhai.setDisable(true); chkNghiHoc.setDisable(true); txtPassword.setDisable(true);
+        btnAddSV.setDisable(true); btnUpdateSV.setDisable(true); btnDeleteSV.setDisable(true);
+        btnRefreshSV.setDisable(true); btnCloseSV.setText("Đóng"); tableSV.setDisable(true);
     }
 
     private void showAlert(String title, String msg, Alert.AlertType type) {
-        Alert a = new Alert(type);
-        a.setTitle(title);
-        a.setHeaderText(null);
-        a.setContentText(msg);
-        a.showAndWait();
+        Alert a = new Alert(type); a.setTitle(title); a.setHeaderText(null); a.setContentText(msg); a.showAndWait();
     }
 }

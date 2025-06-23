@@ -28,6 +28,14 @@ public class MonHoc {
 
     public MonHoc() {
     }
+    
+    public MonHoc(MonHoc other) {
+        this.maMH      = other.getMaMH();
+        this.tenMH     = other.getTenMH();
+        this.soTietLT  = other.getSoTietLT();
+        this.soTietTH  = other.getSoTietTH();
+        // bỏ qua dsLopTinChi
+    }
 
     public String getMaMH() {
         return maMH;

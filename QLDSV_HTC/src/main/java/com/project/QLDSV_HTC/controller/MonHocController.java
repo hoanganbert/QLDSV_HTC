@@ -11,6 +11,8 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Deque;
+import java.util.ArrayDeque;
 import java.util.List;
 
 @Component
@@ -35,6 +37,9 @@ public class MonHocController {
 
     private ObservableList<MonHoc> dsMH = FXCollections.observableArrayList();
 
+    // Undo stack lưu trạng thái trước mỗi thao tác Update/Delete
+    private Deque<MonHoc> undoStack = new ArrayDeque<>();
+
     @Autowired private MonHocService monHocService;
     @Autowired private AppContextHolder appContext;
 
@@ -47,7 +52,7 @@ public class MonHocController {
             return;
         }
 
-        // Cấu hình TableView (tên property phải khớp với getter bên entity)
+        // Cấu hình TableView
         colMaMH.setCellValueFactory(new PropertyValueFactory<>("maMH"));
         colTenMH.setCellValueFactory(new PropertyValueFactory<>("tenMH"));
         colSoTietLT.setCellValueFactory(new PropertyValueFactory<>("soTietLT"));
@@ -55,88 +60,27 @@ public class MonHocController {
 
         loadTableMH();
 
-        // Khi chọn 1 dòng, đổ lên form
         tableMH.getSelectionModel().selectedItemProperty().addListener((obs, old, newMH) -> {
             if (newMH != null) {
-                txtMaMH.setText(newMH.getMaMH().trim());
-                txtTenMH.setText(newMH.getTenMH());
-                txtSoTietLT.setText(String.valueOf(newMH.getSoTietLT()));
-                txtSoTietTH.setText(String.valueOf(newMH.getSoTietTH()));
-
-                // Khi sửa Môn học, không cho đổi mã (maMH)
-                txtMaMH.setDisable(true);
+                bindForm(newMH);
             }
         });
 
-        // Nút Thêm
-        btnAdd.setOnAction(e -> {
-            String ma = txtMaMH.getText().trim();
-            String ten = txtTenMH.getText().trim();
-            String soLTStr = txtSoTietLT.getText().trim();
-            String soTHStr = txtSoTietTH.getText().trim();
+        btnAdd.setOnAction(e -> addMonHoc());
 
-            if (ma.isEmpty() || ten.isEmpty() || soLTStr.isEmpty() || soTHStr.isEmpty()) {
-                showAlert("Lỗi", "Phải nhập đầy đủ Mã MH, Tên MH, Số tiết LT và Số tiết TH.", Alert.AlertType.ERROR);
-                return;
-            }
-            int soLT, soTH;
-            try {
-                soLT = Integer.parseInt(soLTStr);
-                soTH = Integer.parseInt(soTHStr);
-                if (soLT < 0 || soTH < 0) throw new NumberFormatException();
-            } catch (NumberFormatException ex) {
-                showAlert("Lỗi", "Số tiết LT / TH phải là số nguyên >= 0.", Alert.AlertType.ERROR);
-                return;
-            }
-            // Kiểm tra mã MH đã tồn tại chưa
-            if (monHocService.existsById(ma)) {
-                showAlert("Lỗi", "Mã MH đã tồn tại.", Alert.AlertType.WARNING);
-                return;
-            }
-            MonHoc mh = new MonHoc();
-            mh.setMaMH(ma);
-            mh.setTenMH(ten);
-            mh.setSoTietLT(soLT);
-            mh.setSoTietTH(soTH);
-
-            monHocService.save(mh);
-            loadTableMH();
-            clearForm();
-        });
-
-        // Nút Ghi (Update)
         btnUpdate.setOnAction(e -> {
             MonHoc sel = tableMH.getSelectionModel().getSelectedItem();
             if (sel == null) {
                 showAlert("Thông báo", "Chọn Môn học cần sửa.", Alert.AlertType.WARNING);
                 return;
             }
-            String ten = txtTenMH.getText().trim();
-            String soLTStr = txtSoTietLT.getText().trim();
-            String soTHStr = txtSoTietTH.getText().trim();
-            if (ten.isEmpty() || soLTStr.isEmpty() || soTHStr.isEmpty()) {
-                showAlert("Lỗi", "Phải nhập đầy đủ Tên MH, Số tiết LT và Số tiết TH.", Alert.AlertType.ERROR);
-                return;
-            }
-            int soLT, soTH;
-            try {
-                soLT = Integer.parseInt(soLTStr);
-                soTH = Integer.parseInt(soTHStr);
-                if (soLT < 0 || soTH < 0) throw new NumberFormatException();
-            } catch (NumberFormatException ex) {
-                showAlert("Lỗi", "Số tiết LT / TH phải là số nguyên >= 0.", Alert.AlertType.ERROR);
-                return;
-            }
-            sel.setTenMH(ten);
-            sel.setSoTietLT(soLT);
-            sel.setSoTietTH(soTH);
+            // Lưu snapshot trước khi thay đổi
+            undoStack.push(new MonHoc(sel));
+            applyFormTo(sel);
             monHocService.save(sel);
-
-            loadTableMH();
-            clearForm();
+            loadTableMH(); clearForm();
         });
 
-        // Nút Xóa
         btnDelete.setOnAction(e -> {
             MonHoc sel = tableMH.getSelectionModel().getSelectedItem();
             if (sel == null) {
@@ -147,19 +91,24 @@ public class MonHocController {
             confirm.setTitle("Xác nhận");
             confirm.setContentText("Bạn có chắc muốn xóa Môn học " + sel.getMaMH() + "?");
             if (confirm.showAndWait().filter(b -> b == ButtonType.OK).isPresent()) {
+                undoStack.push(new MonHoc(sel));
                 monHocService.delete(sel.getMaMH());
-                loadTableMH();
-                clearForm();
+                loadTableMH(); clearForm();
             }
         });
 
-        // Nút Phục hồi (Refresh)
+        // Nút Phục hồi (Undo)
         btnRefresh.setOnAction(e -> {
-            clearForm();
-            loadTableMH();
+            if (!undoStack.isEmpty()) {
+                MonHoc prev = undoStack.pop();
+                bindForm(prev);
+                monHocService.save(prev);
+                loadTableMH();
+            } else {
+                clearForm(); loadTableMH();
+            }
         });
 
-        // Nút Thoát
         btnThoat.setOnAction(e -> btnThoat.getScene().getWindow().hide());
     }
 
@@ -169,26 +118,64 @@ public class MonHocController {
         tableMH.setItems(dsMH);
     }
 
+    private void bindForm(MonHoc mh) {
+        txtMaMH.setText(mh.getMaMH());
+        txtTenMH.setText(mh.getTenMH());
+        txtSoTietLT.setText(String.valueOf(mh.getSoTietLT()));
+        txtSoTietTH.setText(String.valueOf(mh.getSoTietTH()));
+        txtMaMH.setDisable(true);
+    }
+
+    private void applyFormTo(MonHoc sel) {
+        sel.setTenMH(txtTenMH.getText().trim());
+        sel.setSoTietLT(Integer.parseInt(txtSoTietLT.getText().trim()));
+        sel.setSoTietTH(Integer.parseInt(txtSoTietTH.getText().trim()));
+    }
+
+    private void addMonHoc() {
+        String ma = txtMaMH.getText().trim();
+        String ten = txtTenMH.getText().trim();
+        String soLTStr = txtSoTietLT.getText().trim();
+        String soTHStr = txtSoTietTH.getText().trim();
+
+        if (ma.isEmpty() || ten.isEmpty() || soLTStr.isEmpty() || soTHStr.isEmpty()) {
+            showAlert("Lỗi", "Phải nhập đầy đủ Mã MH, Tên MH, Số tiết LT và Số tiết TH.", Alert.AlertType.ERROR);
+            return;
+        }
+        int soLT, soTH;
+        try {
+            soLT = Integer.parseInt(soLTStr);
+            soTH = Integer.parseInt(soTHStr);
+            if (soLT < 0 || soTH < 0) throw new NumberFormatException();
+        } catch (NumberFormatException ex) {
+            showAlert("Lỗi", "Số tiết LT / TH phải là số nguyên >= 0.", Alert.AlertType.ERROR);
+            return;
+        }
+        if (monHocService.existsById(ma)) {
+            showAlert("Lỗi", "Mã MH đã tồn tại.", Alert.AlertType.WARNING);
+            return;
+        }
+        MonHoc mh = new MonHoc();
+        mh.setMaMH(ma);
+        mh.setTenMH(ten);
+        mh.setSoTietLT(soLT);
+        mh.setSoTietTH(soTH);
+        monHocService.save(mh);
+        loadTableMH(); clearForm();
+    }
+
     private void clearForm() {
-        txtMaMH.clear();
-        txtTenMH.clear();
-        txtSoTietLT.clear();
-        txtSoTietTH.clear();
+        txtMaMH.clear(); txtTenMH.clear(); txtSoTietLT.clear(); txtSoTietTH.clear();
         txtMaMH.setDisable(false);
         tableMH.getSelectionModel().clearSelection();
     }
 
     private void disableForm() {
-        txtMaMH.setDisable(true);
-        txtTenMH.setDisable(true);
-        txtSoTietLT.setDisable(true);
-        txtSoTietTH.setDisable(true);
-        btnAdd.setDisable(true);
-        btnUpdate.setDisable(true);
-        btnDelete.setDisable(true);
-        btnRefresh.setDisable(true);
-        btnThoat.setText("Đóng");
-        tableMH.setDisable(true);
+        txtMaMH.setDisable(true); txtTenMH.setDisable(true);
+        txtSoTietLT.setDisable(true); txtSoTietTH.setDisable(true);
+        btnAdd.setDisable(true); btnUpdate.setDisable(true);
+        btnDelete.setDisable(true); btnRefresh.setDisable(true);
+        btnThoat.setText("Đóng"); tableMH.setDisable(true);
     }
 
     private void showAlert(String title, String msg, Alert.AlertType type) {

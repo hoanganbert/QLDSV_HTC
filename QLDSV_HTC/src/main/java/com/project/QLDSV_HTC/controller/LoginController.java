@@ -143,7 +143,7 @@ public class LoginController {
             appContext.setMaSV(maSV);
 
             // Chuyển thẳng vào form Đăng ký lớp tín chỉ
-            openDangKyWindow();
+            openMainWindow();
         }
     }
 

@@ -4,16 +4,15 @@ import com.project.QLDSV_HTC.dto.DiemDTO;
 import com.project.QLDSV_HTC.entity.DangKy;
 import com.project.QLDSV_HTC.entity.LopTinChi;
 import com.project.QLDSV_HTC.service.DangKyService;
+import com.project.QLDSV_HTC.service.DiemBatchService;
 import com.project.QLDSV_HTC.service.LopTinChiService;
 import com.project.QLDSV_HTC.service.MonHocService;
 import com.project.QLDSV_HTC.service.GiangVienService;
-import com.project.QLDSV_HTC.service.DiemBatchService;
 import com.project.QLDSV_HTC.util.AppContextHolder;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.converter.DoubleStringConverter;
 import javafx.util.converter.IntegerStringConverter;
@@ -45,9 +44,9 @@ public class NhapDiemController {
     @FXML private TableColumn<DiemDTO, Double> colDiemGK, colDiemCK, colDiemHM;
 
     private ObservableList<DiemDTO> dsDiem = FXCollections.observableArrayList();
-    private ObservableList<String>    dsNienKhoa = FXCollections.observableArrayList("2023-2024", "2024-2025", "2025-2026");
-    private ObservableList<Integer>   dsHocKy    = FXCollections.observableArrayList(Arrays.asList(1, 2, 3));
-    private ObservableList<Integer>   dsNhom     = FXCollections.observableArrayList(Arrays.asList(1, 2, 3, 4, 5));
+    private ObservableList<String>  dsNienKhoa = FXCollections.observableArrayList("2023-2024", "2024-2025", "2025-2026");
+    private ObservableList<Integer> dsHocKy    = FXCollections.observableArrayList(1, 2, 3);
+    private ObservableList<Integer> dsNhom     = FXCollections.observableArrayList(Arrays.asList(1,2,3,4,5));
 
     @Autowired private LopTinChiService ltcService;
     @Autowired private MonHocService monHocService;
@@ -56,30 +55,20 @@ public class NhapDiemController {
     @Autowired private DiemBatchService diemBatchService;
     @Autowired private AppContextHolder appContext;
 
-    /**
-     * Lớp lưu lại một lần thay đổi (Change) cho mỗi ô điểm.
-     */
+    // Undo stack lưu thay đổi từng ô
     private static class Change {
-        private DiemDTO dto;
-        private String field;
-        private Object oldValue;
-
-        public Change(DiemDTO dto, String field, Object oldValue) {
-            this.dto = dto;
-            this.field = field;
-            this.oldValue = oldValue;
+        final DiemDTO dto;
+        final String field;
+        final Object oldValue;
+        Change(DiemDTO dto, String field, Object oldValue) {
+            this.dto = dto; this.field = field; this.oldValue = oldValue;
         }
-        public DiemDTO getDto()     { return dto; }
-        public String getField()    { return field; }
-        public Object getOldValue() { return oldValue; }
     }
-
-    // Stack để lưu lịch sử thay đổi; mỗi lần edit đẩy vào stack, undo pop ra.
     private Stack<Change> undoStack = new Stack<>();
 
     @FXML
     public void initialize() {
-        // Phân quyền: chỉ PGV hoặc KHOA
+        // chỉ PGV hoặc KHOA được phép nhập
         String role = appContext.getRole();
         if (!"PGV".equals(role) && !"KHOA".equals(role)) {
             disableForm();
@@ -87,19 +76,22 @@ public class NhapDiemController {
             return;
         }
 
-        // Thiết lập dữ liệu cho ComboBox
+        // load comboBox
         cboNienKhoa.setItems(dsNienKhoa);
         cboHocKy.setItems(dsHocKy);
         cboMonHoc.setItems(FXCollections.observableArrayList(monHocService.getAllMonHoc()));
         cboNhom.setItems(dsNhom);
         cboGiangVien.setItems(FXCollections.observableArrayList(gvService.getAllGiangVien()));
 
-        // Cấu hình TableView và các cột
-        colMaSV.setCellValueFactory(new PropertyValueFactory<>("maSV"));
-        colHoTenSV.setCellValueFactory(new PropertyValueFactory<>("hoTenSV"));
+        // bật editable cho table
+        tableDiem.setEditable(true);
 
-        // Cột CC (Integer, editable)
-        colDiemCC.setCellValueFactory(new PropertyValueFactory<>("diemCC"));
+        // Mã SV, Họ tên SV read-only
+        colMaSV.setCellValueFactory(cell -> cell.getValue().maSVProperty());
+        colHoTenSV.setCellValueFactory(cell -> cell.getValue().hoTenSVProperty());
+
+        // Điểm CC
+        colDiemCC.setCellValueFactory(cell -> cell.getValue().diemCCProperty().asObject());
         colDiemCC.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
         colDiemCC.setOnEditCommit(e -> {
             DiemDTO dto = e.getRowValue();
@@ -107,17 +99,16 @@ public class NhapDiemController {
             int newVal = e.getNewValue();
             if (newVal < 0 || newVal > 10) {
                 showAlert("Lỗi", "Điểm chuyên cần phải từ 0 đến 10.", Alert.AlertType.ERROR);
-                tableDiem.refresh();
             } else {
                 undoStack.push(new Change(dto, "CC", oldVal));
                 dto.setDiemCC(newVal);
                 dto.computeDiemHM();
-                tableDiem.refresh();
             }
+            tableDiem.refresh();
         });
 
-        // Cột GK (Double, editable)
-        colDiemGK.setCellValueFactory(new PropertyValueFactory<>("diemGK"));
+        // Điểm GK
+        colDiemGK.setCellValueFactory(cell -> cell.getValue().diemGKProperty().asObject());
         colDiemGK.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
         colDiemGK.setOnEditCommit(e -> {
             DiemDTO dto = e.getRowValue();
@@ -125,17 +116,16 @@ public class NhapDiemController {
             double newVal = e.getNewValue();
             if (newVal < 0 || newVal > 10) {
                 showAlert("Lỗi", "Điểm giữa kỳ phải từ 0 đến 10.", Alert.AlertType.ERROR);
-                tableDiem.refresh();
             } else {
                 undoStack.push(new Change(dto, "GK", oldVal));
                 dto.setDiemGK(newVal);
                 dto.computeDiemHM();
-                tableDiem.refresh();
             }
+            tableDiem.refresh();
         });
 
-        // Cột CK (Double, editable)
-        colDiemCK.setCellValueFactory(new PropertyValueFactory<>("diemCK"));
+        // Điểm CK
+        colDiemCK.setCellValueFactory(cell -> cell.getValue().diemCKProperty().asObject());
         colDiemCK.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
         colDiemCK.setOnEditCommit(e -> {
             DiemDTO dto = e.getRowValue();
@@ -143,52 +133,38 @@ public class NhapDiemController {
             double newVal = e.getNewValue();
             if (newVal < 0 || newVal > 10) {
                 showAlert("Lỗi", "Điểm cuối kỳ phải từ 0 đến 10.", Alert.AlertType.ERROR);
-                tableDiem.refresh();
             } else {
                 undoStack.push(new Change(dto, "CK", oldVal));
                 dto.setDiemCK(newVal);
                 dto.computeDiemHM();
-                tableDiem.refresh();
             }
+            tableDiem.refresh();
         });
 
-        // Cột HM (Double, chỉ đọc)
-        colDiemHM.setCellValueFactory(new PropertyValueFactory<>("diemHM"));
+        // Điểm hết môn read-only
+        colDiemHM.setCellValueFactory(cell -> cell.getValue().diemHMProperty().asObject());
 
-        tableDiem.setEditable(true);
+        // gán data vào table
+        tableDiem.setItems(dsDiem);
 
-        // Nút “Lọc”
+        // button events
         btnLoc.setOnAction(e -> locSVTheoLTC());
-
-        // Nút “Ghi Điểm”
         btnGhi.setOnAction(e -> ghiDiem());
-
-        // Nút “Phục hồi” (multi-level undo)
         btnPhucHoi.setOnAction(e -> {
             if (undoStack.isEmpty()) {
-                showAlert("Thông báo", "Không còn thao tác nào để phục hồi.", Alert.AlertType.INFORMATION);
+                showAlert("Thông báo", "Không có thao tác nào để phục hồi.", Alert.AlertType.INFORMATION);
                 return;
             }
             Change last = undoStack.pop();
-            DiemDTO dto = last.getDto();
-            String field = last.getField();
-            Object oldValue = last.getOldValue();
-            switch (field) {
-                case "CC":
-                    dto.setDiemCC((Integer) oldValue);
-                    break;
-                case "GK":
-                    dto.setDiemGK((Double) oldValue);
-                    break;
-                case "CK":
-                    dto.setDiemCK((Double) oldValue);
-                    break;
+            DiemDTO dto = last.dto;
+            switch (last.field) {
+                case "CC": dto.setDiemCC((Integer) last.oldValue); break;
+                case "GK": dto.setDiemGK((Double) last.oldValue);  break;
+                case "CK": dto.setDiemCK((Double) last.oldValue);  break;
             }
             dto.computeDiemHM();
             tableDiem.refresh();
         });
-
-        // Nút “Thoát”
         btnClose.setOnAction(e -> btnClose.getScene().getWindow().hide());
     }
 
@@ -206,75 +182,65 @@ public class NhapDiemController {
     }
 
     private void locSVTheoLTC() {
-        String nk = cboNienKhoa.getSelectionModel().getSelectedItem();
-        Integer hk = cboHocKy.getSelectionModel().getSelectedItem();
-        com.project.QLDSV_HTC.entity.MonHoc mh = cboMonHoc.getSelectionModel().getSelectedItem();
-        Integer nh = cboNhom.getSelectionModel().getSelectedItem();
-        com.project.QLDSV_HTC.entity.GiangVien gv = cboGiangVien.getSelectionModel().getSelectedItem();
+        String nk = cboNienKhoa.getValue();
+        Integer hk = cboHocKy.getValue();
+        com.project.QLDSV_HTC.entity.MonHoc mh = cboMonHoc.getValue();
+        Integer nh = cboNhom.getValue();
+        com.project.QLDSV_HTC.entity.GiangVien gv = cboGiangVien.getValue();
 
-        if (nk == null || hk == null || mh == null || nh == null || gv == null) {
-            showAlert("Thông báo", "Chọn đủ thông tin lọc (Niên khóa, Học kỳ, Môn học, Nhóm, Giảng viên).", Alert.AlertType.WARNING);
+        if (nk==null||hk==null||mh==null||nh==null||gv==null) {
+            showAlert("Thông báo", "Chọn đủ Niên khóa, Học kỳ, Môn, Nhóm, GV.", Alert.AlertType.WARNING);
             return;
         }
-
-        // 1) Tìm LopTinChi theo chi tiết
-        Optional<LopTinChi> optLTC = ltcService.getLTCTheoChiTiet(nk, hk, mh.getMaMH(), nh, gv.getMaGV());
-        if (optLTC.isEmpty()) {
+        Optional<LopTinChi> opt = ltcService.getLTCTheoChiTiet(nk, hk, mh.getMaMH(), nh, gv.getMaGV());
+        if (opt.isEmpty()) {
             showAlert("Thông báo", "Không tìm thấy Lớp tín chỉ phù hợp.", Alert.AlertType.INFORMATION);
             return;
         }
-        LopTinChi ltc = optLTC.get();
-        // 2) Nếu role = KHOA, kiểm tra lớp đó có cùng khoa hay không
-        if ("KHOA".equals(appContext.getRole())) {
-            String maKhoaLogin = appContext.getMaKhoa();
-            if (!maKhoaLogin.equals(ltc.getKhoaQuanLy().getMaKhoa())) {
-                showAlert("Truy cập bị từ chối", "Bạn chỉ có quyền nhập điểm cho Lớp tín chỉ thuộc Khoa của mình.", Alert.AlertType.WARNING);
-                return;
-            }
+        LopTinChi ltc = opt.get();
+        // check quyền KHOA
+        if ("KHOA".equals(appContext.getRole()) &&
+            !appContext.getMaKhoa().equals(ltc.getKhoaQuanLy().getMaKhoa())) {
+            showAlert("Truy cập bị từ chối", "Bạn chỉ nhập điểm cho khoa mình.", Alert.AlertType.WARNING);
+            return;
         }
 
-        // 3) Lấy danh sách DangKy (chưa hủy) của lớp tín chỉ ltc
         List<DangKy> ds = dkService.getDKTheoLTC(ltc.getMaLTC());
         dsDiem.clear();
-        undoStack.clear();   // mỗi lần Lọc mới, xóa toàn bộ lịch sử undo
+        undoStack.clear();
 
-        // 4) Chuyển về DiemDTO để hiển thị
         for (DangKy dk : ds) {
             DiemDTO dto = new DiemDTO();
             dto.setMaSV(dk.getSinhVien().getMaSV());
             dto.setHoTenSV(dk.getSinhVien().getHo() + " " + dk.getSinhVien().getTen());
-            dto.setDiemCC(dk.getDiemCC() == null ? 0 : dk.getDiemCC());
-            dto.setDiemGK(dk.getDiemGK() == null ? 0.0 : dk.getDiemGK());
-            dto.setDiemCK(dk.getDiemCK() == null ? 0.0 : dk.getDiemCK());
+            dto.setDiemCC(dk.getDiemCC() == null? 0 : dk.getDiemCC());
+            dto.setDiemGK(dk.getDiemGK() == null? 0.0 : dk.getDiemGK());
+            dto.setDiemCK(dk.getDiemCK() == null? 0.0 : dk.getDiemCK());
             dto.computeDiemHM();
             dsDiem.add(dto);
         }
-        tableDiem.setItems(dsDiem);
     }
 
     private void ghiDiem() {
-        String nk = cboNienKhoa.getSelectionModel().getSelectedItem();
-        Integer hk = cboHocKy.getSelectionModel().getSelectedItem();
-        com.project.QLDSV_HTC.entity.MonHoc mh = cboMonHoc.getSelectionModel().getSelectedItem();
-        Integer nh = cboNhom.getSelectionModel().getSelectedItem();
-        com.project.QLDSV_HTC.entity.GiangVien gv = cboGiangVien.getSelectionModel().getSelectedItem();
+        String nk = cboNienKhoa.getValue();
+        Integer hk = cboHocKy.getValue();
+        com.project.QLDSV_HTC.entity.MonHoc mh = cboMonHoc.getValue();
+        Integer nh = cboNhom.getValue();
+        com.project.QLDSV_HTC.entity.GiangVien gv = cboGiangVien.getValue();
 
-        Optional<LopTinChi> optLTC = ltcService.getLTCTheoChiTiet(nk, hk, mh.getMaMH(), nh, gv.getMaGV());
-        if (optLTC.isEmpty()) {
+        Optional<LopTinChi> opt = ltcService.getLTCTheoChiTiet(nk, hk, mh.getMaMH(), nh, gv.getMaGV());
+        if (opt.isEmpty()) {
             showAlert("Thông báo", "Không tìm thấy Lớp tín chỉ phù hợp.", Alert.AlertType.INFORMATION);
             return;
         }
-        LopTinChi ltc = optLTC.get();
-        Integer maLTC = ltc.getMaLTC();
-
+        int maLTC = opt.get().getMaLTC();
         try {
-            // Gọi batch update
             diemBatchService.capNhatDiemBatch(maLTC, dsDiem);
-            showAlert("Thành công", "Cập nhật điểm thành công (batch).", Alert.AlertType.INFORMATION);
+            showAlert("Thành công", "Cập nhật điểm thành công.", Alert.AlertType.INFORMATION);
             tableDiem.refresh();
         } catch (Exception ex) {
             ex.printStackTrace();
-            showAlert("Lỗi", "Có lỗi khi cập nhật điểm: " + ex.getMessage(), Alert.AlertType.ERROR);
+            showAlert("Lỗi", "Cập nhật điểm thất bại: " + ex.getMessage(), Alert.AlertType.ERROR);
         }
     }
 

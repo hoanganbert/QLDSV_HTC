@@ -1,6 +1,7 @@
 package com.project.QLDSV_HTC.controller;
 
 import com.project.QLDSV_HTC.dto.BaoCaoBDLTCDTO;
+import com.project.QLDSV_HTC.entity.MonHoc;
 import com.project.QLDSV_HTC.service.BaoCaoService;
 import com.project.QLDSV_HTC.util.AppContextHolder;
 
@@ -87,21 +88,39 @@ public class BaoCaoBDLTCController {
     }
 
     private void chayBaoCao() {
-        String nk = cboNienKhoa.getValue();
-        Integer hk = cboHocKy.getValue();
-        com.project.QLDSV_HTC.entity.MonHoc mh = cboMonHoc.getValue();
-        Integer nhom = cboNhom.getValue();
+        String nk   = cboNienKhoa.getValue();
+        Integer hk  = cboHocKy.getValue();
+        MonHoc   mh = cboMonHoc.getValue();
+        Integer nh  = cboNhom.getValue();
 
-        if (nk == null || hk == null || mh == null || nhom == null) {
-            showAlert("Thông báo", "Chọn đầy đủ Niên khóa, Học kỳ, Môn học, Nhóm.", Alert.AlertType.WARNING);
+        if (nk==null||hk==null||mh==null||nh==null) {
+            showAlert("Thông báo",
+                "Chọn đầy đủ Niên khóa, Học kỳ, Môn học, Nhóm.",
+                Alert.AlertType.WARNING);
             return;
         }
-        // Lấy mã khoa từ AppContextHolder (PGV có thể bỏ qua, KHOA chỉ được lấy theo khoa của họ)
-        String maKhoa = appContext.getMaKhoa();
 
+        // **1. Chỉ truyền Khoa nếu không phải PGV**
+        String maKhoa = "PGV".equals(appContext.getRole())
+            ? null
+            : appContext.getMaKhoa();
+
+        // Gọi SP
         List<BaoCaoBDLTCDTO> list = baoCaoService.getBaoCaoBDLTC(
-        	    maKhoa, nk, hk, mh.getMaMH(), nhom, appContext.getMaGV());
+            maKhoa, nk, hk, mh.getMaMH(), nh);
+
+        // **2. Tính lại điểm hết môn cho mỗi DTO**
+        for (BaoCaoBDLTCDTO dto : list) {
+            dto.computeDiemHM();
+        }
+
         dsBaoCao.setAll(list);
+
+        if (list.isEmpty()) {
+            showAlert("Thông báo",
+                "Không có dữ liệu báo cáo.",
+                Alert.AlertType.INFORMATION);
+        }
     }
 
     private void xuatExcel() {
@@ -162,6 +181,17 @@ public class BaoCaoBDLTCController {
                 r.createCell(6).setCellValue(dto.getDiemCK());
                 r.createCell(7).setCellValue(dto.getDiemHM());
             }
+            
+            // Số sinh viên
+            Row footer = sheet.createRow(rowIdx++);
+            Cell cellFooter = footer.createCell(0);
+            cellFooter.setCellValue("Số sinh viên: " + dsBaoCao.size());
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(
+                rowIdx-1,   
+                rowIdx-1,   
+                0,          
+                7           
+            ));
 
             // Auto-size cột
             for (int i = 0; i <= 7; i++) {

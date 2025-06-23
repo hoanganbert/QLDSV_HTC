@@ -57,6 +57,20 @@ public class LopTinChi {
 
     public LopTinChi() {
     }
+    
+    // Copy constructor
+    public LopTinChi(LopTinChi other) {
+        this.maLTC        = other.getMaLTC();
+        this.nienKhoa     = other.getNienKhoa();
+        this.hocKy        = other.getHocKy();
+        this.monHoc       = other.getMonHoc();
+        this.nhom         = other.getNhom();
+        this.giangVien    = other.getGiangVien();
+        this.soSVToiThieu = other.getSoSVToiThieu();
+        this.khoaQuanLy   = other.getKhoaQuanLy();
+        this.huyLop       = other.isHuyLop();
+        // lưu ý: dsDangKy không copy, vì chúng ta chỉ cần restore các trường chính
+    }
 
     public Integer getMaLTC() {
         return maLTC;

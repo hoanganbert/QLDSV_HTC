@@ -30,6 +30,14 @@ public class Lop {
 
     public Lop() {
     }
+    
+    public Lop(Lop other) {
+        this.maLop   = other.getMaLop();
+        this.tenLop  = other.getTenLop();
+        this.khoaHoc = other.getKhoaHoc();
+        this.khoa    = other.getKhoa();
+        // bỏ qua dsSinhVien
+    }
 
     public String getMaLop() {
         return maLop;

@@ -5,7 +5,6 @@ import com.project.QLDSV_HTC.entity.Lop;
 import com.project.QLDSV_HTC.service.KhoaService;
 import com.project.QLDSV_HTC.service.LopService;
 import com.project.QLDSV_HTC.util.AppContextHolder;
-
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -17,9 +16,13 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Deque;
+import java.util.ArrayDeque;
 
 @Component
 public class LopController {
+
+    // NOTE: Requires a copy constructor Lop(Lop other) in the entity
 
     @FXML private TextField txtMaLop;
     @FXML private TextField txtTenLop;
@@ -40,6 +43,9 @@ public class LopController {
 
     private ObservableList<Lop> dsLop = FXCollections.observableArrayList();
     private ObservableList<Khoa> dsKhoa = FXCollections.observableArrayList();
+
+    // Undo stack lưu trạng thái trước mỗi thao tác Update/Delete
+    private Deque<Lop> undoStack = new ArrayDeque<>();
 
     @Autowired private LopService lopService;
     @Autowired private KhoaService khoaService;
@@ -65,8 +71,7 @@ public class LopController {
             String maKhoaLogin = appContext.getMaKhoa();
             Khoa khoaLogin = dsKhoa.stream()
                     .filter(k -> k.getMaKhoa().equals(maKhoaLogin))
-                    .findFirst()
-                    .orElse(null);
+                    .findFirst().orElse(null);
             if (khoaLogin != null) {
                 cboKhoa.getSelectionModel().select(khoaLogin);
                 cboKhoa.setDisable(true);
@@ -77,28 +82,14 @@ public class LopController {
         colMaLop.setCellValueFactory(new PropertyValueFactory<>("maLop"));
         colTenLop.setCellValueFactory(new PropertyValueFactory<>("tenLop"));
         colKhoaHoc.setCellValueFactory(new PropertyValueFactory<>("khoaHoc"));
-        colMaKhoa.setCellValueFactory(cell ->
-            new ReadOnlyStringWrapper(cell.getValue().getKhoa().getMaKhoa())
-        );
+        colMaKhoa.setCellValueFactory(cell -> new ReadOnlyStringWrapper(cell.getValue().getKhoa().getMaKhoa()));
 
         // Load dữ liệu
         loadTableLop();
 
         // Khi chọn 1 dòng trong table, đổ lên form
         tableLop.getSelectionModel().selectedItemProperty().addListener((obs, old, newLop) -> {
-            if (newLop != null) {
-                txtMaLop.setText(newLop.getMaLop().trim());
-                txtTenLop.setText(newLop.getTenLop());
-                txtKhoaHoc.setText(newLop.getKhoaHoc());
-                // Chọn ComboBox Khoa tương ứng
-                for (Khoa k : dsKhoa) {
-                    if (k.getMaKhoa().equals(newLop.getKhoa().getMaKhoa())) {
-                        cboKhoa.getSelectionModel().select(k);
-                        break;
-                    }
-                }
-                txtMaLop.setDisable(true);
-            }
+            if (newLop != null) bindForm(newLop);
         });
 
         // Nút Thêm
@@ -126,29 +117,24 @@ public class LopController {
             clearForm();
         });
 
-        // Nút Ghi (Update)
+        // Nút Ghi (Update): lưu snapshot trước khi thay đổi
         btnUpdate.setOnAction(e -> {
             Lop sel = tableLop.getSelectionModel().getSelectedItem();
             if (sel == null) {
                 showAlert("Thông báo", "Chọn Lớp cần sửa.", Alert.AlertType.WARNING);
                 return;
             }
-            String ten = txtTenLop.getText().trim();
-            String kh = txtKhoaHoc.getText().trim();
-            Khoa k = cboKhoa.getSelectionModel().getSelectedItem();
-            if (ten.isEmpty() || kh.isEmpty() || k == null) {
-                showAlert("Lỗi", "Phải nhập đầy đủ: Tên Lớp, Khóa Học, Khoa.", Alert.AlertType.ERROR);
-                return;
-            }
-            sel.setTenLop(ten);
-            sel.setKhoaHoc(kh);
-            sel.setKhoa(k);
+            undoStack.push(new Lop(sel));
+            // Áp dụng thay đổi từ form
+            sel.setTenLop(txtTenLop.getText().trim());
+            sel.setKhoaHoc(txtKhoaHoc.getText().trim());
+            sel.setKhoa(cboKhoa.getSelectionModel().getSelectedItem());
             lopService.save(sel);
             loadTableLop();
             clearForm();
         });
 
-        // Nút Xóa
+        // Nút Xóa: lưu snapshot trước khi xóa
         btnDelete.setOnAction(e -> {
             Lop sel = tableLop.getSelectionModel().getSelectedItem();
             if (sel == null) {
@@ -159,16 +145,24 @@ public class LopController {
             confirm.setTitle("Xác nhận");
             confirm.setContentText("Bạn có chắc muốn xóa Lớp " + sel.getMaLop() + "?");
             if (confirm.showAndWait().filter(b -> b == ButtonType.OK).isPresent()) {
+                undoStack.push(new Lop(sel));
                 lopService.delete(sel.getMaLop());
                 loadTableLop();
                 clearForm();
             }
         });
 
-        // Nút Phục hồi (Refresh)
+        // Nút Phục hồi (Undo)
         btnRefresh.setOnAction(e -> {
-            clearForm();
-            loadTableLop();
+            if (!undoStack.isEmpty()) {
+                Lop prev = undoStack.pop();
+                bindForm(prev);
+                lopService.save(prev);
+                loadTableLop();
+            } else {
+                clearForm();
+                loadTableLop();
+            }
         });
 
         // Nút Thoát
@@ -185,6 +179,14 @@ public class LopController {
         }
         dsLop.setAll(list);
         tableLop.setItems(dsLop);
+    }
+
+    private void bindForm(Lop lop) {
+        txtMaLop.setText(lop.getMaLop());
+        txtTenLop.setText(lop.getTenLop());
+        txtKhoaHoc.setText(lop.getKhoaHoc());
+        cboKhoa.getSelectionModel().select(lop.getKhoa());
+        txtMaLop.setDisable(true);
     }
 
     private void clearForm() {

@@ -75,7 +75,7 @@ public class BaoCaoBDTOController {
         String maLop = lop.getMaLop();
 
         // Gọi service để lấy báo cáo cross-tab
-        com.project.QLDSV_HTC.dto.BieuDoBDDTO result = baoCaoService.getBaoCaoBDTO(maLop);
+        com.project.QLDSV_HTC.dto.BieuDoBDDTO result = baoCaoService.getBaoCaoBDDTO(maLop);
 
         // 1) Xóa cột cũ (nếu có)
         tableBaoCao.getColumns().clear();

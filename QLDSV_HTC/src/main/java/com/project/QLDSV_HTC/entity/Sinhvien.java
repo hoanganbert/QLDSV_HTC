@@ -43,6 +43,19 @@ public class Sinhvien {
 
     public Sinhvien() {
     }
+    
+    public Sinhvien(Sinhvien other) {
+        this.maSV       = other.getMaSV();
+        this.ho         = other.getHo();
+        this.ten        = other.getTen();
+        this.lop        = other.getLop();
+        this.phai       = other.isPhai();
+        this.ngaySinh   = other.getNgaySinh();
+        this.diaChi     = other.getDiaChi();
+        this.dangNghiHoc= other.isDangNghiHoc();
+        this.password   = other.getPassword();
+        // bỏ qua dsDangKy
+    }
 
     public String getMaSV() {
         return maSV;

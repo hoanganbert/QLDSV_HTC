@@ -1,5 +1,8 @@
 package com.project.QLDSV_HTC.dto;
 
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+
 /**
  * DangKyDTO: Dùng cho màn Đăng ký lớp tín chỉ (DangKyController).
  * Mỗi dòng đại diện cho một lớp tín chỉ có thể đăng ký, gồm:
@@ -12,7 +15,8 @@ package com.project.QLDSV_HTC.dto;
  *  - soSVDaDK: (Integer) Số sinh viên đã đăng ký (chưa hủy)
  */
 public class DangKyDTO {
-    private Boolean selected;
+//    private Boolean selected;
+    private final BooleanProperty selected = new SimpleBooleanProperty(false);
     private Integer maLTC;
     private String maMH;
     private String tenMH;
@@ -20,16 +24,26 @@ public class DangKyDTO {
     private String hoTenGV;
     private Integer soSVDaDK;
 
-    public DangKyDTO() {
-        this.selected = false;
-    }
-
-    public Boolean getSelected() {
+//    public DangKyDTO() {
+//        this.selected = false;
+//    }
+//
+//    public Boolean getSelected() {
+//        return selected;
+//    }
+//
+//    public void setSelected(Boolean selected) {
+//        this.selected = selected;
+//    }
+    public BooleanProperty selectedProperty() {
         return selected;
     }
 
-    public void setSelected(Boolean selected) {
-        this.selected = selected;
+    public boolean isSelected() {
+        return selected.get();
+    }
+    public void setSelected(boolean sel) {
+        this.selected.set(sel);
     }
 
     public Integer getMaLTC() {
