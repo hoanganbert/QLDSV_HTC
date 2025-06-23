@@ -10,9 +10,6 @@ import java.util.List;
 
 @Repository
 public interface LopRepository extends JpaRepository<Lop, String> {
-    /**
-     * Trả về danh sách Lớp thuộc 1 Khoa (theo maKhoa).
-     */
     @Query("SELECT l FROM Lop l WHERE l.khoa.maKhoa = :maKhoa")
     List<Lop> findByMaKhoa(@Param("maKhoa") String maKhoa);
 }

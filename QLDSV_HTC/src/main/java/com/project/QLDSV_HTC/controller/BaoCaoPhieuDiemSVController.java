@@ -28,7 +28,7 @@ import java.util.Optional;
 public class BaoCaoPhieuDiemSVController {
 
     @FXML private ComboBox<Sinhvien> cboSV;
-    @FXML private TextField txtMaSV;    // dùng nếu muốn cho nhập thủ công (không bắt buộc)
+    @FXML private TextField txtMaSV;   
     @FXML private ComboBox<String> cboNienKhoa;
     @FXML private ComboBox<Integer> cboHocKy;
 
@@ -51,12 +51,10 @@ public class BaoCaoPhieuDiemSVController {
 
     @FXML
     public void initialize() {
-        // 1. Load ComboBox Sinh viên (PGV/KHOA có thể chọn, SV chỉ xem của mình)
         cboSV.setItems(FXCollections.observableArrayList(sinhVienService.getAllSV()));
         cboNienKhoa.setItems(dsNienKhoa);
         cboHocKy.setItems(dsHocKy);
 
-        // 2. Nếu user là SINHVIEN, tự động chọn sinh viên đó và disable ComboBox/TextField
         if ("SINHVIEN".equals(appContext.getRole())) {
             String maSV = appContext.getMaSV();
             Optional<Sinhvien> optSv = sinhVienService.findById(maSV);
@@ -69,20 +67,16 @@ public class BaoCaoPhieuDiemSVController {
             }
         }
 
-        // 3. Cấu hình TableView
         colSTT    .setCellValueFactory(new PropertyValueFactory<>("stt"));
         colTenMH  .setCellValueFactory(new PropertyValueFactory<>("tenMH"));
         colDiemMax.setCellValueFactory(new PropertyValueFactory<>("diemMax"));
 
         tableBaoCao.setItems(dsBaoCao);
 
-        // 4. Nút “Chạy”
         btnChay.setOnAction(e -> chayBaoCao());
 
-        // 5. Nút “Xuất Excel”
         btnXuatExcel.setOnAction(e -> xuatExcel());
 
-        // 6. Nút “Đóng”
         btnClose.setOnAction(e -> btnClose.getScene().getWindow().hide());
     }
 
@@ -100,7 +94,6 @@ public class BaoCaoPhieuDiemSVController {
             showAlert("Thông báo", "Phải chọn/nhập Mã SV, Niên khóa, Học kỳ.", Alert.AlertType.WARNING);
             return;
         }
-        // Kiểm tra SV tồn tại
         if (!sinhVienService.existsById(maSV)) {
             showAlert("Lỗi", "Mã SV không tồn tại.", Alert.AlertType.ERROR);
             return;
@@ -131,7 +124,6 @@ public class BaoCaoPhieuDiemSVController {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("PhieuDiemSV");
 
-            // Tiêu đề
             Row row0 = sheet.createRow(0);
             Cell cell0 = row0.createCell(0);
             cell0.setCellValue("SINH VIÊN: " + maSV);
@@ -142,13 +134,11 @@ public class BaoCaoPhieuDiemSVController {
             cell1.setCellValue("Niên khóa: " + cboNienKhoa.getValue() + "   Học kỳ: " + cboHocKy.getValue());
             sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, 2));
 
-            // Header cột (bắt đầu row 3, index=3)
             Row header = sheet.createRow(3);
             header.createCell(0).setCellValue("STT");
             header.createCell(1).setCellValue("Tên môn học");
             header.createCell(2).setCellValue("Điểm Max");
 
-            // Dữ liệu từ row 4, index=4
             int rowIdx = 4;
             for (BaoCaoPhieuDiemDTO dto : dsBaoCao) {
                 Row r = sheet.createRow(rowIdx++);
@@ -157,12 +147,10 @@ public class BaoCaoPhieuDiemSVController {
                 r.createCell(2).setCellValue(dto.getDiemMax());
             }
 
-            // Auto-size cột 0..2
             for (int i = 0; i <= 2; i++) {
                 sheet.autoSizeColumn(i);
             }
 
-            // Ghi file
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 workbook.write(fos);
             }

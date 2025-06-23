@@ -54,7 +54,6 @@ public class BaoCaoDongHPController {
 
     @FXML
     public void initialize() {
-        // 1. Load ComboBox Lớp (PGV: tất cả; KHOA: chỉ khoa của họ)
         if ("PGV".equals(appContext.getRole())) {
             cboLop.setItems(FXCollections.observableArrayList(lopService.getAllLop()));
         } else if ("KHOA".equals(appContext.getRole())) {

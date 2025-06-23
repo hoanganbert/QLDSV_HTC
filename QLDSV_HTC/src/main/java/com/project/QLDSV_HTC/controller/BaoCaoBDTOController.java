@@ -29,8 +29,7 @@ public class BaoCaoBDTOController {
     @FXML private Button btnXuatExcel;
     @FXML private Button btnClose;
 
-    @FXML private TableView<ObservableList<Object>> tableBaoCao;  // Mỗi row là 1 ObservableList<Object>
-    // LƯU Ý: Không khai báo cột cố định ở đây vì ta sẽ tạo cột động trong code
+    @FXML private TableView<ObservableList<Object>> tableBaoCao; 
 
     private ObservableList<ObservableList<Object>> dsBaoCao = FXCollections.observableArrayList();
 
@@ -40,7 +39,6 @@ public class BaoCaoBDTOController {
 
     @FXML
     public void initialize() {
-        // 1. Load ComboBox Lớp
         if ("PGV".equals(appContext.getRole())) {
             cboLop.setItems(FXCollections.observableArrayList(lopService.getAllLop()));
         } else if ("KHOA".equals(appContext.getRole())) {
@@ -51,18 +49,13 @@ public class BaoCaoBDTOController {
             cboLop.setDisable(true);
         }
 
-        // 2. TableView không cần cấu hình cột ở FXML, vì sẽ tạo cột lúc “Chạy”
 
-        // 3. Set items cho TableView
         tableBaoCao.setItems(dsBaoCao);
 
-        // 4. Nút “Chạy”
         btnChay.setOnAction(e -> chayBaoCao());
 
-        // 5. Nút “Xuất Excel”
         btnXuatExcel.setOnAction(e -> xuatExcel());
 
-        // 6. Nút “Đóng”
         btnClose.setOnAction(e -> btnClose.getScene().getWindow().hide());
     }
 
@@ -74,25 +67,20 @@ public class BaoCaoBDTOController {
         }
         String maLop = lop.getMaLop();
 
-        // Gọi service để lấy báo cáo cross-tab
         com.project.QLDSV_HTC.dto.BieuDoBDDTO result = baoCaoService.getBaoCaoBDDTO(maLop);
 
-        // 1) Xóa cột cũ (nếu có)
         tableBaoCao.getColumns().clear();
         dsBaoCao.clear();
 
-        // 2) Tạo cột “Mã SV – Họ tên” (cột đầu)
         TableColumn<ObservableList<Object>, Object> colMaSVHoTen = new TableColumn<>("MãSV - Họ tên");
         colMaSVHoTen.setCellValueFactory(param -> {
-            // Lấy phần tử ở index 0
             return new ReadOnlyObjectWrapper<>(param.getValue().get(0));
         });
         tableBaoCao.getColumns().add(colMaSVHoTen);
 
-        // 3) Tạo động cột cho từng môn (theo thứ tự trong subjectNames)
         List<String> subjectNames = result.getSubjectNames(); 
         for (int i = 0; i < subjectNames.size(); i++) {
-            final int colIndex = i + 1; // Vì index=0 đã là “MãSV-Họ tên”
+            final int colIndex = i + 1;
             String subj = subjectNames.get(i);
             TableColumn<ObservableList<Object>, Object> col = new TableColumn<>(subj);
             col.setCellValueFactory(param -> {
@@ -101,9 +89,8 @@ public class BaoCaoBDTOController {
             tableBaoCao.getColumns().add(col);
         }
 
-        // 4) Đẩy dữ liệu vào dsBaoCao (mỗi dòng là 1 ObservableList<Object>)
+        //Đẩy dữ liệu vào dsBaoCao (mỗi dòng là 1 ObservableList<Object>)
         for (List<Object> row : result.getData()) {
-            // Mình giả sử row.get(0) là “MãSV-Họ tên”, row.get(1..n) là điểm từng môn.
             ObservableList<Object> obsRow = FXCollections.observableArrayList(row);
             dsBaoCao.add(obsRow);
         }
@@ -130,20 +117,17 @@ public class BaoCaoBDTOController {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("BangDiemTongKet");
 
-            // 1) Tiêu đề
             Row row0 = sheet.createRow(0);
             Cell cell0 = row0.createCell(0);
             cell0.setCellValue("BẢNG ĐIỂM TỔNG KẾT CUỐI KHÓA - LỚP: " + maLop);
             sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, tableBaoCao.getColumns().size() - 1));
 
-            // 2) Header: “MãSV - Họ tên” và tên các môn
             Row header = sheet.createRow(2);
             for (int colIndex = 0; colIndex < tableBaoCao.getColumns().size(); colIndex++) {
                 String colName = tableBaoCao.getColumns().get(colIndex).getText();
                 header.createCell(colIndex).setCellValue(colName);
             }
 
-            // 3) Dữ liệu
             int rowIdx = 3;
             for (ObservableList<Object> obsRow : dsBaoCao) {
                 Row excelRow = sheet.createRow(rowIdx++);
@@ -158,12 +142,10 @@ public class BaoCaoBDTOController {
                 }
             }
 
-            // 4) Auto-size cột
             for (int i = 0; i < tableBaoCao.getColumns().size(); i++) {
                 sheet.autoSizeColumn(i);
             }
 
-            // 5) Ghi file
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 workbook.write(fos);
             }

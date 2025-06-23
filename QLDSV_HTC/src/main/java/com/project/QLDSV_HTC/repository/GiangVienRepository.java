@@ -8,6 +8,5 @@ import java.util.List;
 
 @Repository
 public interface GiangVienRepository extends JpaRepository<GiangVien, String> {
-    // Tên field trong GiangVien là "khoa", nên method phải là findByKhoa_MaKhoa
     List<GiangVien> findByKhoa_MaKhoa(String maKhoa);
 }

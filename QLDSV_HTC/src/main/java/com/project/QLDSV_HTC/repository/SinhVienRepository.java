@@ -10,9 +10,6 @@ import java.util.List;
 
 @Repository
 public interface SinhVienRepository extends JpaRepository<Sinhvien, String> {
-    /**
-     * Lấy danh sách sinh viên theo mã Lớp.
-     */
     @Query("SELECT s FROM Sinhvien s WHERE s.lop.maLop = :maLop")
     List<Sinhvien> findByMaLop(@Param("maLop") String maLop);
 }

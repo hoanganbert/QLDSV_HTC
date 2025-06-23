@@ -46,24 +46,20 @@ public class GiangVienController {
 
     @FXML
     public void initialize() {
-        // 1. Chỉ PGV mới được phép
         if (!"PGV".equals(appContext.getRole())) {
             disableForm();
             showAlert("Truy cập bị từ chối", "Chỉ PGV mới có quyền quản lý Giảng viên.", Alert.AlertType.WARNING);
             return;
         }
 
-        // 2. Load ComboBox Khoa
         dsKhoa.clear();
         dsKhoa.addAll(khoaService.getAllKhoa());
         cboKhoa.setItems(dsKhoa);
 
-        // 3. Cấu hình TableView
         colMaGV.setCellValueFactory(new PropertyValueFactory<>("maGV"));
         colHo.setCellValueFactory(new PropertyValueFactory<>("ho"));
         colTen.setCellValueFactory(new PropertyValueFactory<>("ten"));
 
-        // Hiển thị mã khoa qua quan hệ GiangVien → Khoa
         colMaKhoa.setCellValueFactory(cellData -> {
             Khoa k = cellData.getValue().getKhoa();
             String ma = (k == null ? "" : k.getMaKhoa());
@@ -72,13 +68,11 @@ public class GiangVienController {
 
         loadTableGV();
 
-        // 4. Khi chọn 1 dòng, đổ lên form
         tableGV.getSelectionModel().selectedItemProperty().addListener((obs, old, newGV) -> {
             if (newGV != null) {
                 txtMaGV.setText(newGV.getMaGV().trim());
                 txtHo.setText(newGV.getHo());
                 txtTen.setText(newGV.getTen());
-                // Chọn Khoa trong ComboBox dựa vào newGV.getKhoa().getMaKhoa()
                 if (newGV.getKhoa() != null) {
                     String maKhoa = newGV.getKhoa().getMaKhoa();
                     for (Khoa k : dsKhoa) {
@@ -92,7 +86,6 @@ public class GiangVienController {
             }
         });
 
-        // 5. Nút Thêm GV
         btnAddGV.setOnAction(e -> {
             String ma = txtMaGV.getText().trim();
             String ho = txtHo.getText().trim();
@@ -111,14 +104,13 @@ public class GiangVienController {
             gv.setMaGV(ma);
             gv.setHo(ho);
             gv.setTen(ten);
-            gv.setKhoa(k);              // sửa thành setKhoa(k)
+            gv.setKhoa(k);              
             giangVienService.save(gv);
 
             loadTableGV();
             clearForm();
         });
 
-        // 6. Nút Cập nhật GV
         btnUpdateGV.setOnAction(e -> {
             GiangVien sel = tableGV.getSelectionModel().getSelectedItem();
             if (sel == null) {
@@ -134,14 +126,13 @@ public class GiangVienController {
             }
             sel.setHo(ho);
             sel.setTen(ten);
-            sel.setKhoa(k);             // sửa thành setKhoa(k)
+            sel.setKhoa(k);             
             giangVienService.save(sel);
 
             loadTableGV();
             clearForm();
         });
 
-        // 7. Nút Xóa GV
         btnDeleteGV.setOnAction(e -> {
             GiangVien sel = tableGV.getSelectionModel().getSelectedItem();
             if (sel == null) {
@@ -158,13 +149,11 @@ public class GiangVienController {
             }
         });
 
-        // 8. Nút Refresh (Phục hồi)
         btnRefreshGV.setOnAction(e -> {
             clearForm();
             loadTableGV();
         });
 
-        // 9. Nút Thoát
         btnCloseGV.setOnAction(e -> btnCloseGV.getScene().getWindow().hide());
     }
 

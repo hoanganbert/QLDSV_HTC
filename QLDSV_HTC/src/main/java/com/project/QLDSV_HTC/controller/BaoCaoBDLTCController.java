@@ -57,7 +57,6 @@ public class BaoCaoBDLTCController {
 
     @FXML
     public void initialize() {
-        // 1. Khởi tạo ComboBox
         cboNienKhoa.setItems(dsNienKhoa);
         cboHocKy  .setItems(dsHocKy);
         cboMonHoc.setItems(FXCollections.observableArrayList(
@@ -65,7 +64,6 @@ public class BaoCaoBDLTCController {
         	));
         cboNhom   .setItems(dsNhom);
 
-        // 2. Cấu hình TableView
         colSTT  .setCellValueFactory(new PropertyValueFactory<>("stt"));
         colMaSV .setCellValueFactory(new PropertyValueFactory<>("maSV"));
         colHo   .setCellValueFactory(new PropertyValueFactory<>("ho"));
@@ -77,13 +75,10 @@ public class BaoCaoBDLTCController {
 
         tableBaoCao.setItems(dsBaoCao);
 
-        // 3. Sự kiện “Chạy”
         btnChay.setOnAction(e -> chayBaoCao());
 
-        // 4. Sự kiện “Xuất Excel”
         btnXuatExcel.setOnAction(e -> xuatExcel());
 
-        // 5. Nút “Đóng”
         btnClose.setOnAction(e -> btnClose.getScene().getWindow().hide());
     }
 
@@ -100,16 +95,13 @@ public class BaoCaoBDLTCController {
             return;
         }
 
-        // **1. Chỉ truyền Khoa nếu không phải PGV**
         String maKhoa = "PGV".equals(appContext.getRole())
             ? null
             : appContext.getMaKhoa();
 
-        // Gọi SP
         List<BaoCaoBDLTCDTO> list = baoCaoService.getBaoCaoBDLTC(
             maKhoa, nk, hk, mh.getMaMH(), nh);
 
-        // **2. Tính lại điểm hết môn cho mỗi DTO**
         for (BaoCaoBDLTCDTO dto : list) {
             dto.computeDiemHM();
         }
@@ -141,7 +133,6 @@ public class BaoCaoBDLTCController {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("BangDiemLTC");
 
-            // Tiêu đề
             Row row0 = sheet.createRow(0);
             Cell cell0 = row0.createCell(0);
             cell0.setCellValue("KHOA: " + appContext.getTenKhoa());
@@ -157,7 +148,6 @@ public class BaoCaoBDLTCController {
             );
             sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, 7));
 
-            // Header cột (bắt đầu từ row 3)
             Row header = sheet.createRow(3);
             header.createCell(0).setCellValue("STT");
             header.createCell(1).setCellValue("Mã SV");
@@ -168,7 +158,6 @@ public class BaoCaoBDLTCController {
             header.createCell(6).setCellValue("Điểm CK");
             header.createCell(7).setCellValue("Điểm hết môn");
 
-            // Dữ liệu từ row 4
             int rowIdx = 4;
             for (BaoCaoBDLTCDTO dto : dsBaoCao) {
                 Row r = sheet.createRow(rowIdx++);
@@ -182,7 +171,6 @@ public class BaoCaoBDLTCController {
                 r.createCell(7).setCellValue(dto.getDiemHM());
             }
             
-            // Số sinh viên
             Row footer = sheet.createRow(rowIdx++);
             Cell cellFooter = footer.createCell(0);
             cellFooter.setCellValue("Số sinh viên: " + dsBaoCao.size());
@@ -193,12 +181,10 @@ public class BaoCaoBDLTCController {
                 7           
             ));
 
-            // Auto-size cột
             for (int i = 0; i <= 7; i++) {
                 sheet.autoSizeColumn(i);
             }
 
-            // Ghi file
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 workbook.write(fos);
             }

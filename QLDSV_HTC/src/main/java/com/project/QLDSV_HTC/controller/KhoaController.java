@@ -36,21 +36,17 @@ public class KhoaController {
 
     @FXML
     public void initialize() {
-        // Chỉ PGV mới có quyền quản lý Khoa
         if (!"PGV".equals(appContext.getRole())) {
             disableForm();
             showAlert("Truy cập bị từ chối", "Chỉ PGV mới có quyền quản lý Khoa.", Alert.AlertType.WARNING);
             return;
         }
 
-        // Cấu hình TableView
         colMaKhoa.setCellValueFactory(new PropertyValueFactory<>("maKhoa"));
         colTenKhoa.setCellValueFactory(new PropertyValueFactory<>("tenKhoa"));
 
-        // Load dữ liệu
         loadTableKhoa();
 
-        // Khi chọn 1 dòng trong table, đổ dữ liệu lên form
         tableKhoa.getSelectionModel().selectedItemProperty().addListener((obs, old, newKhoa) -> {
             if (newKhoa != null) {
                 txtMaKhoa.setText(newKhoa.getMaKhoa().trim());
@@ -59,7 +55,6 @@ public class KhoaController {
             }
         });
 
-        // Nút Thêm
         btnAdd.setOnAction(e -> {
             String ma = txtMaKhoa.getText().trim();
             String ten = txtTenKhoa.getText().trim();
@@ -79,7 +74,6 @@ public class KhoaController {
             clearForm();
         });
 
-        // Nút Ghi (Update)
         btnUpdate.setOnAction(e -> {
             Khoa sel = tableKhoa.getSelectionModel().getSelectedItem();
             if (sel == null) {
@@ -97,7 +91,6 @@ public class KhoaController {
             clearForm();
         });
 
-        // Nút Xóa
         btnDelete.setOnAction(e -> {
             Khoa sel = tableKhoa.getSelectionModel().getSelectedItem();
             if (sel == null) {
@@ -114,13 +107,11 @@ public class KhoaController {
             }
         });
 
-        // Nút Phục hồi (Refresh)
         btnRefresh.setOnAction(e -> {
             clearForm();
             loadTableKhoa();
         });
 
-        // Nút Thoát
         btnClose.setOnAction(e -> btnClose.getScene().getWindow().hide());
     }
 

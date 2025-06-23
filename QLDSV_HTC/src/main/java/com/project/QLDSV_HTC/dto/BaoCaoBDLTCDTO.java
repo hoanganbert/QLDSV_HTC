@@ -88,9 +88,6 @@ public class BaoCaoBDLTCDTO {
         this.diemHM = diemHM;
     }
 
-    /**
-     * Tự động tính điểm hết môn = CC*0.1 + GK*0.3 + CK*0.6, làm tròn 1 chữ số thập phân.
-     */
     public void computeDiemHM() {
         double cc = (diemCC == null) ? 0.0 : diemCC;
         double gk = (diemGK == null) ? 0.0 : diemGK;

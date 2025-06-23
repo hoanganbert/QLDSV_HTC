@@ -32,7 +32,6 @@ public class App extends Application {
     @Override
     public void init() {
     	instance = this;
-        // Khởi tạo Spring context
         springContext = SpringApplication.run(App.class);
     }
     
@@ -49,13 +48,12 @@ public class App extends Application {
 
     private static Parent loadFXML(String fxml) throws IOException {
         FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource(fxml + ".fxml"));
-     // Sử dụng Spring context để cung cấp controller
         fxmlLoader.setControllerFactory(App.getInstance().springContext::getBean);
         return fxmlLoader.load();
     }
     
     private static App getInstance() {
-        return instance; // Trả về instance đã lưu
+        return instance;
     }
 
     private static String currentUser;
@@ -77,10 +75,10 @@ public class App extends Application {
     @Override
     public void stop() throws Exception {
         if (springContext != null) {
-            springContext.close(); // Đóng Spring context
+            springContext.close();
         }
         System.out.println("Ứng dụng đã dừng.");
-        System.exit(0); // Ép JVM thoát hoàn toàn
+        System.exit(0);
     }
     
     public static void main(String[] args) {

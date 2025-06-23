@@ -62,13 +62,11 @@ public class BaoCaoDKSVController {
 
     @FXML
     public void initialize() {
-        // Load dữ liệu cho các ComboBox
         cboNienKhoa.setItems(dsNienKhoa);
         cboHocKy.setItems(dsHocKy);
         cboMonHoc.setItems(FXCollections.observableArrayList(monHocService.getAllMonHoc()));
         cboNhom.setItems(dsNhom);
 
-        // Cấu hình các cột TableView
         colSTT  .setCellValueFactory(new PropertyValueFactory<>("stt"));
         colMaSV .setCellValueFactory(new PropertyValueFactory<>("maSV"));
         colHo   .setCellValueFactory(new PropertyValueFactory<>("ho"));
@@ -77,7 +75,6 @@ public class BaoCaoDKSVController {
         colMaLop.setCellValueFactory(new PropertyValueFactory<>("maLop"));
         tableBaoCao.setItems(dsBaoCao);
 
-        // Thiết lập sự kiện nút
         btnChay     .setOnAction(e -> runReport());
         btnXuatExcel.setOnAction(e -> exportExcel());
         btnClose    .setOnAction(e -> ((Window)btnClose.getScene().getWindow()).hide());
@@ -94,7 +91,6 @@ public class BaoCaoDKSVController {
             return;
         }
 
-        // Xác định mã khoa (PGV xem tất cả -> null, KHOA giới hạn)
         String maKhoa = "PGV".equals(appContext.getRole()) ? null : appContext.getMaKhoa();
         List<BaoCaoDKSVDTO> list = baoCaoService.getBaoCaoDKSV(
             maKhoa, nk, hk, mh.getMaMH(), nhom
@@ -125,14 +121,11 @@ public class BaoCaoDKSVController {
         try (Workbook wb = new XSSFWorkbook()) {
             Sheet sheet = wb.createSheet("DSDKLTC");
 
-            // 1. Tiêu đề chính
             Row r0 = sheet.createRow(0);
             Cell c0 = r0.createCell(0);
             c0.setCellValue("DANH SÁCH SINH VIÊN ĐĂNG KÝ LỚP TÍN CHỈ");
             sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 5));
 
-            // 2. Dòng KHOA
-            // Nếu role = KHOA thì lấy tên khoa, PGV hiển thị "Tất cả"
             String tenKhoa = "PGV".equals(appContext.getRole())
                 ? "Tất cả"
                 : khoaService.findById(appContext.getMaKhoa())
@@ -142,7 +135,6 @@ public class BaoCaoDKSVController {
             r1.createCell(0).setCellValue("KHOA: " + tenKhoa);
             sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 5));
 
-            // 3. Niên khóa – Học kỳ
             Row r2 = sheet.createRow(2);
             r2.createCell(0).setCellValue(
                 "Niên khóa: " + cboNienKhoa.getValue()
@@ -150,7 +142,6 @@ public class BaoCaoDKSVController {
             );
             sheet.addMergedRegion(new CellRangeAddress(2, 2, 0, 5));
 
-            // 4. Môn học – Nhóm
             Row r3 = sheet.createRow(3);
             String tenMH = cboMonHoc.getSelectionModel().getSelectedItem().getTenMH();
             Integer nhom = cboNhom.getValue();
@@ -160,7 +151,6 @@ public class BaoCaoDKSVController {
             );
             sheet.addMergedRegion(new CellRangeAddress(3, 3, 0, 5));
 
-            // 5. Header bảng bắt đầu từ hàng 5 (index = 5)
             int headerRow = 5;
             Row hdr = sheet.createRow(headerRow);
             hdr.createCell(0).setCellValue("STT");
@@ -170,7 +160,7 @@ public class BaoCaoDKSVController {
             hdr.createCell(4).setCellValue("Phái");
             hdr.createCell(5).setCellValue("Mã lớp");
 
-            // 6. Dữ liệu: sort theo Tên rồi Họ
+            // Dữ liệu: sort theo Tên rồi Họ
             List<BaoCaoDKSVDTO> sorted = new ArrayList<>(dsBaoCao);
             sorted.sort(Comparator
                 .comparing(BaoCaoDKSVDTO::getTen, String::compareToIgnoreCase)
@@ -198,12 +188,10 @@ public class BaoCaoDKSVController {
                 5            
             ));
 
-            // 7. Auto-size các cột
             for (int i = 0; i <= 5; i++) {
                 sheet.autoSizeColumn(i);
             }
 
-            // 8. Ghi file
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 wb.write(fos);
             }

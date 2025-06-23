@@ -45,11 +45,9 @@ public class BaoCaoLTCController {
 
     @FXML
     public void initialize() {
-        // 1. Load ComboBox Niên Khóa và Học Kỳ
         cboNienKhoa.setItems(FXCollections.observableArrayList("2023-2024", "2024-2025", "2025-2026"));
         cboHocKy.setItems(FXCollections.observableArrayList(1, 2, 3));
 
-        // 2. Cấu hình TableView
         colSTT.setCellValueFactory(new PropertyValueFactory<>("stt"));
         colTenMH.setCellValueFactory(new PropertyValueFactory<>("tenMH"));
         colNhom.setCellValueFactory(new PropertyValueFactory<>("nhom"));
@@ -59,13 +57,10 @@ public class BaoCaoLTCController {
 
         tableBaoCao.setItems(dsBaoCao);
 
-        // 3. Nút Chạy báo cáo
         btnChay.setOnAction(e -> chayBaoCao());
 
-        // 4. Nút Xuất Excel
         btnXuatExcel.setOnAction(e -> xuatExcel());
 
-        // 5. Nút Thoát
         btnClose.setOnAction(e -> btnClose.getScene().getWindow().hide());
     }
 
@@ -80,7 +75,6 @@ public class BaoCaoLTCController {
         // Nếu PGV, hiển thị tất cả; nếu KHOA, chỉ hiển thị theo khoa của họ
         List<LopTinChi> list;
         if ("PGV".equals(appContext.getRole())) {
-            // Service cần cung cấp phương thức lấy tất cả Lớp tín chỉ theo NK-HK (không phân biệt Khoa)
             list = ltcService.findByNienKhoaHocKy(nk, hk);
         } else {
             String maKhoa = appContext.getMaKhoa();
@@ -117,7 +111,6 @@ public class BaoCaoLTCController {
 
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("DS_LTC");
-            // Tiêu đề
             Row row0 = sheet.createRow(0);
             Cell cell0 = row0.createCell(0);
             cell0.setCellValue("KHOA: " + appContext.getTenKhoa());
@@ -128,7 +121,6 @@ public class BaoCaoLTCController {
             cell1.setCellValue("Niên khóa: " + cboNienKhoa.getValue() + "   Học kỳ: " + cboHocKy.getValue());
             sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(1, 1, 0, 5));
 
-            // Header cột (tại row 3, index = 3)
             Row header = sheet.createRow(3);
             header.createCell(0).setCellValue("STT");
             header.createCell(1).setCellValue("Tên môn học");
@@ -137,7 +129,6 @@ public class BaoCaoLTCController {
             header.createCell(4).setCellValue("SV tối thiểu");
             header.createCell(5).setCellValue("SV đã đăng ký");
 
-            // Dữ liệu từ row 4 (index = 4)
             int rowIdx = 4;
             for (BaoCaoLTCDTO dto : dsBaoCao) {
                 Row r = sheet.createRow(rowIdx++);
@@ -149,18 +140,15 @@ public class BaoCaoLTCController {
                 r.createCell(5).setCellValue(dto.getSoSVDaDK());
             }
 
-            // Dòng tổng số lớp
             Row lastRow = sheet.createRow(rowIdx + 1);
             Cell c = lastRow.createCell(0);
             c.setCellValue("Số lượng lớp đã mở: " + dsBaoCao.size());
             sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(rowIdx + 1, rowIdx + 1, 0, 5));
 
-            // Auto-size cột 0..5
             for (int i = 0; i <= 5; i++) {
                 sheet.autoSizeColumn(i);
             }
 
-            // Ghi file
             try (FileOutputStream fos = new FileOutputStream(file)) {
                 workbook.write(fos);
             }
